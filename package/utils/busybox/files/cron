@@ -12,8 +12,6 @@ validate_cron_section() {
 }
 
 start_service() {
-	[ -z "$(ls /etc/crontabs/)" ] && return 1
-
 	loglevel="$(uci_get "system.@system[0].cronloglevel")"
 
 	[ -z "${loglevel}" ] || {
