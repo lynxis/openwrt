@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. /lib/functions/uci-defaults.sh
+
+ucidef_set_hostname() {
+	local hostname="$1"
+
+	json_select_object system
+		json_add_string hostname "$hostname"
+	json_select ..
+}
+
+board_config_update
+
+mac=$(cat /sys/class/net/eth0/address)
+
+ucidef_set_hostname "SKWB-$mac"
+
+board_config_flush
+
+exit 0
