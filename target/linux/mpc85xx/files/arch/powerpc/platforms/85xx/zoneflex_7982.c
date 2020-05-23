@@ -67,7 +67,7 @@ machine_arch_initcall(ruckus_zoneflex_7982, mpc85xx_common_publish_devices);
  */
 static int __init ruckus_zoneflex_7982_probe(void)
 {
-	if (of_machine_is_compatible("ruckus,zoneflex_7982"))
+	if (of_machine_is_compatible("ruckus,zoneflex-7982"))
 		return 1;
 	return 0;
 }
