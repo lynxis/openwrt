@@ -36,7 +36,45 @@
 				spi-max-frequency = <25000000>;
 
 				partitions {
-					compatible = "ecoscentric,redboot-fis-partitions";
+					compatible = "fixed-partitions";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					partition@0 {
+						reg = <0x0 0x80000>;
+						label = "u-boot";
+						read-only;
+					};
+
+					oem-partition@80000 {
+						reg = <0x8000 0x140000>;
+						label = "rcks_wlan.main";
+					};
+
+					oem-partition@1c0000 {
+						reg = <0x1c0000 0xbc0000>;
+						label = "v54_$rootfs$_1";
+					};
+
+					oem-partition@d80000 {
+						reg = <0xd80000 0x260000>;
+						label = "datafs";
+					};
+
+					partition@fe0000 {
+						reg = <0xfe0000 0x10000>;
+						label = "u-boot env";
+					};
+
+					oem-partition@ff0000 {
+						reg = <0xff0000 0x1000>;
+						label = "Board Data";
+					};
+
+					partition@1000000 {
+						reg = <0x1000000 0x1000000>;
+						label = "firmware";
+				       };
 				};
 			};
 		};
