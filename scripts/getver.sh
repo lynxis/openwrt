@@ -28,6 +28,7 @@ try_git() {
 		ORIGIN="$(git rev-parse --verify --symbolic-full-name ${BRANCH}@{u} 2>/dev/null)"
 		[ -n "$ORIGIN" ] || ORIGIN="$(git rev-parse --verify --symbolic-full-name master@{u} 2>/dev/null)"
 		REV="$(git rev-list ${REBOOT}..$GET_REV 2>/dev/null | wc -l | awk '{print $1}')"
+		CUSTOM=""
 
 		if [ -n "$ORIGIN" ]; then
 			UPSTREAM_BASE="$(git merge-base $GET_REV $ORIGIN)"
@@ -38,10 +39,13 @@ try_git() {
 
 		if [ "$REV" -gt "$UPSTREAM_REV" ]; then
 			REV="${UPSTREAM_REV}+$((REV - UPSTREAM_REV))"
+			CUSTOM="$(git log -n 1 --format="%h" $GET_REV)"
 		fi
 
 		REV="${REV:+r$REV-$(git log -n 1 --format="%h" $UPSTREAM_BASE)}"
-
+		if [ -n "$CUSTOM" ] ; then
+			REV="$REV-g$CUSTOM"
+		fi
 		;;
 	esac
 
