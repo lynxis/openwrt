@@ -32,6 +32,12 @@
 		};
 	};
 
+	ws2812 {
+		compatible = "ws2812-gpio";
+		gpio = <&gpio 11 GPIO_ACTIVE_HIGH>;
+		ws2812,leds = <24>;
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
@@ -46,11 +52,6 @@
 		compatible = "gpio-export";
 		#size-cells = <0>;
 
-		ws2812 {
-			gpio-export,name = "ws2812";
-			gpio-export,output = <1>;
-			gpios = <&gpio 11 GPIO_ACTIVE_HIGH>;
-		};
 
 		nrf_power {
 			gpio-export,name = "nrf_power";
