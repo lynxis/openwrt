@@ -12,6 +12,7 @@ ramips_setup_interfaces()
 	asus,rp-ac56|\
 	asus,rp-ac87|\
 	edimax,re23s|\
+	mikrotik,ltap-2hnd|\
 	mikrotik,routerboard-m11g|\
 	netgear,ex6150|\
 	sercomm,na502|\
@@ -204,6 +205,10 @@ ramips_setup_macs()
 		lan_mac=$(mtd_get_mac_ascii devinfo hw_mac_addr)
 		wan_mac=$lan_mac
 		label_mac=$lan_mac
+		;;
+	mikrotik,ltap-2hnd)
+		label_mac=$(cat "/sys/firmware/mikrotik/hard_config/mac_base")
+		lan_mac=$label_mac
 		;;
 	mikrotik,routerboard-750gr3|\
 	mikrotik,routerboard-760igs|\
