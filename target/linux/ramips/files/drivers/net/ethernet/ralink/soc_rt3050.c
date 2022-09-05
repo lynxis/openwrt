@@ -20,6 +20,9 @@
 #include "esw_rt3050.h"
 #include "mdio_rt2880.h"
 
+#define RT305X_RESET_FE         BIT(21)
+#define RT305X_RESET_ESW        BIT(23)
+
 static const u16 rt5350_reg_table[FE_REG_COUNT] = {
 	[FE_REG_PDMA_GLO_CFG] = RT5350_PDMA_GLO_CFG,
 	[FE_REG_PDMA_RST_CFG] = RT5350_PDMA_RST_CFG,
@@ -113,8 +116,21 @@ static void rt5350_tx_dma(struct fe_tx_dma *txd)
 	txd->txd4 = 0;
 }
 
+/* rt5350 require a combined reset as long the DMA engines crashs.
+ * it might be possible to stop the DMA engine to prevent it.
+ */
+static void rt305x_fe_reset(struct fe_priv *priv)
+{
+	fe_reset(RT305X_RESET_FE | RT305X_RESET_ESW);
+
+	/* check if switch is alive */
+	if (priv->soc->swpriv)
+		rt3050_esw_hw_init(priv->soc->swpriv);
+}
+
 static struct fe_soc_data rt3050_data = {
 	.init_data = rt305x_init_data,
+	.reset_fe = rt305x_fe_reset,
 	.fwd_config = rt3050_fwd_config,
 	.switch_init = rt3050_esw_init,
 	.pdma_glo_cfg = FE_PDMA_SIZE_8DWORDS,
@@ -126,6 +142,7 @@ static struct fe_soc_data rt3050_data = {
 
 static struct fe_soc_data rt5350_data = {
 	.init_data = rt5350_init_data,
+	.reset_fe = rt305x_fe_reset,
 	.reg_table = rt5350_reg_table,
 	.set_mac = rt5350_set_mac,
 	.fwd_config = rt5350_fwd_config,

@@ -261,18 +261,6 @@ static inline void esw_rmw_raw(struct rt305x_esw *esw, unsigned reg,
 	__raw_writel(t | val, esw->base + reg);
 }
 
-static void esw_reset(struct rt305x_esw *esw)
-{
-	if (!esw->rst_esw)
-		return;
-
-	reset_control_assert(esw->rst_esw);
-	usleep_range(60, 120);
-	reset_control_deassert(esw->rst_esw);
-	/* the esw takes long to reset otherwise the board hang */
-	msleep(10);
-}
-
 static void esw_reset_ephy(struct rt305x_esw *esw)
 {
 	if (!esw->rst_ephy)
@@ -460,13 +448,11 @@ static void esw_set_gsc(struct rt305x_esw *esw)
 
 static int esw_apply_config(struct switch_dev *dev);
 
-static void esw_hw_init(struct rt305x_esw *esw)
+void rt3050_esw_hw_init(struct rt305x_esw *esw)
 {
 	int i;
 	u8 port_disable = 0;
 	u8 port_map = RT305X_ESW_PMAP_LLLLLL;
-
-	esw_reset(esw);
 
 	/* vodoo from original driver */
 	esw_w32(esw, 0xC8A07850, RT305X_ESW_REG_FCT0);
@@ -860,7 +846,7 @@ static int esw_reset_switch(struct switch_dev *dev)
 	esw->global_vlan_enable = 0;
 	memset(esw->ports, 0, sizeof(esw->ports));
 	memset(esw->vlans, 0, sizeof(esw->vlans));
-	esw_hw_init(esw);
+	rt3050_esw_hw_init(esw);
 
 	return 0;
 }
@@ -1496,7 +1482,7 @@ int rt3050_esw_init(struct fe_priv *priv)
 	priv->soc->swpriv = esw;
 	esw->priv = priv;
 
-	esw_hw_init(esw);
+	rt3050_esw_hw_init(esw);
 
 	rgmii = of_get_property(np, "ralink,rgmii", NULL);
 	if (rgmii && be32_to_cpu(*rgmii) == 1) {

@@ -27,6 +27,9 @@ static inline void mtk_switch_exit(void) { }
 
 #endif
 
+struct rt305x_esw;
+
 int rt3050_esw_init(struct fe_priv *priv);
 int rt3050_esw_has_carrier(struct fe_priv *priv);
+void rt3050_esw_hw_init(struct rt305x_esw *esw);
 #endif
