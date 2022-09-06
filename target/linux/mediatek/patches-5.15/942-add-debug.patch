@@ -1,0 +1,25 @@
+From 9113efd76e294640333d344ed9e0ec5a37efe59d Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Mon, 5 Sep 2022 09:39:43 +0200
+Subject: [PATCH 3/3] add debug
+
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+index 66159693b453..96bcef1ea39c 100644
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -642,6 +642,8 @@ static void mtk_mac_link_up(struct phylink_config *config,
+ 		if (!pcs->pcs.ops)
+ 			return;
+ 
++		dev_info(mac->hw->dev,
++			 "set speed up for speed %s" , phy_speed_to_str(speed));
+ 		switch (speed) {
+ 		case SPEED_2500:
+ 			mtk_pcs_setup_mode_force(pcs, PHY_INTERFACE_MODE_2500BASEX);
+-- 
+2.35.1
+
