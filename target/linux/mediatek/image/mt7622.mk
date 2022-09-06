@@ -204,6 +204,14 @@ define Device/mediatek_mt7622-rfb1
 endef
 TARGET_DEVICES += mediatek_mt7622-rfb1
 
+define Device/samknows_whitebox_x
+  DEVICE_VENDOR := SamKnows
+  DEVICE_MODEL := Whitebox X
+  DEVICE_DTS := mt7622-sam-x
+  DEVICE_DTS_DIR := ../dts
+endef
+TARGET_DEVICES += samknows_whitebox_x
+
 define Device/mediatek_mt7622-rfb1-ubi
   DEVICE_VENDOR := MediaTek
   DEVICE_MODEL := MTK7622 rfb1 AP (UBI)
