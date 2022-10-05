@@ -10,6 +10,13 @@ config DROPBEAR_CURVE25519
 
 		Increases binary size by about 4 kB (MIPS).
 
+config DROPBEAR_RSA_SHA1
+	bool "RSA SHA1 (insecure)"
+	default n
+	help
+		Enables support for insecure RSA + SHA1 based authentication
+		in key exchange and public key authentication.
+
 config DROPBEAR_ECC
 	bool "Elliptic curve cryptography (ECC)"
 	default n
