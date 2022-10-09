@@ -137,12 +137,16 @@
 		// phy-connection-type = "2500base-x";
 		phy-mode = "2500base-x";
 		// phy-connection-type = "2500base-x";
+		nvmem-cells = <&macaddr_factory_0>;
+		nvmem-cell-names = "mac-address";
 	};
 
 	gmac1: mac@1 {
 		compatible = "mediatek,eth-mac";
 		reg = <1>;
 		phy-mode = "rgmii";
+		nvmem-cells = <&macaddr_factory_6>;
+		nvmem-cell-names = "mac-address";
 		fixed-link {
 			speed = <1000>;
 			full-duplex;
@@ -378,19 +382,14 @@
 				reg = <0x2c0000 0x40000>;
 			};
 
-			partition@4300000 {
-				label = "rootfs_data";
-				reg = <0x4300000 0xa00000>;
+			partition@300000 {
+				label = "firmware";
+				reg = <0x300000 0x2000000>;
 			};
 
-			partition@4d00000 {
-				label = "rootfs_data2";
-				reg = <0x4d00000 0x6100000>;
-			};
-
-			partition@01 {
-				label = "full";
-				reg = <0x0000000 0x8000000>;
+			partition@2300000 {
+				label = "firmware2";
+				reg = <0x2300000 0x2000000>;
 			};
 		};
 	};
@@ -415,13 +414,20 @@
 };
 
 &wmac {
-	mediatek,mtd-eeprom = <&factory 0x0000>;
+	mediatek,mtd-eeprom = <&factory 0x2000>;
+	nvmem-cells = <&macaddr_factory_c>;
+	nvmem-cell-names = "mac-address";
+	pinctrl-names = "default";
+	pinctrl-0 = <&wmac_pins>;
 	status = "okay";
 };
 
 &slot0 {
 	wmac1: mt7915@0,0 {
 		reg = <0x0000 0 0 0 0>;
+		mediatek,mtd-eeprom = <&factory 0x4000>;
+		nvmem-cells = <&macaddr_factory_12>;
+		nvmem-cell-names = "mac-address";
 		ieee80211-freq-limit = <5000000 6000000>;
 
 		led {
@@ -431,3 +437,22 @@
 	};
 };
 
+&factory {
+	compatible = "nvmem-cells";
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	macaddr_factory_0: macaddr@0 {
+		reg = <0x0 0x6>;
+	};
+
+	macaddr_factory_6: macaddr@6 {
+		reg = <0x6 0x6>;
+	};
+	macaddr_factory_c: macaddr@c {
+		reg = <0xc 0x6>;
+	};
+	macaddr_factory_12: macaddr@12 {
+		reg = <0x12 0x6>;
+	};
+};
