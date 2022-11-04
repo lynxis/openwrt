@@ -61,6 +61,7 @@ DEFAULT_PACKAGES.router:=\
 	odhcpd-ipv6only \
 	ppp \
 	ppp-mod-pppoe
+DEFAULT_PACKAGES.samknows:=odhcp6c
 
 ifneq ($(DUMP),)
   all: dumpinfo
