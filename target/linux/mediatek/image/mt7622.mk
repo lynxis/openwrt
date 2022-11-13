@@ -209,14 +209,15 @@ define Device/mediatek_mt7622-rfb1
 endef
 TARGET_DEVICES += mediatek_mt7622-rfb1
 
-define Device/samknows_whitebox_v10
+define Device/samknows_whitebox_v9plus
   DEVICE_VENDOR := SamKnows
-  DEVICE_MODEL := Whitebox 10
-  DEVICE_DTS := mt7622-sam-whitebox-v10
+  DEVICE_MODEL := Whitebox 9+
+  DEVICE_DTS := mt7622-samknows-whitebox-v9plus
   DEVICE_DTS_DIR := ../dts
-  SUPPORTED_DEVICES += samknows,whitebox-v10
+  DEVICE_PACKAGES := kmod-mt7915e
+  SUPPORTED_DEVICES += samknows,whitebox-v9plus
 endef
-TARGET_DEVICES += samknows_whitebox_v10
+TARGET_DEVICES += samknows_whitebox_v9plus
 
 define Device/mediatek_mt7622-rfb1-ubi
   DEVICE_VENDOR := MediaTek
