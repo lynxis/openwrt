@@ -209,15 +209,26 @@ define Device/mediatek_mt7622-rfb1
 endef
 TARGET_DEVICES += mediatek_mt7622-rfb1
 
-define Device/samknows_whitebox_v9plus
+define Device/samknows_whitebox-v9plus
   DEVICE_VENDOR := SamKnows
   DEVICE_MODEL := Whitebox 9+
   DEVICE_DTS := mt7622-samknows-whitebox-v9plus
   DEVICE_DTS_DIR := ../dts
   DEVICE_PACKAGES := kmod-mt7915e
   SUPPORTED_DEVICES += samknows,whitebox-v9plus
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  UBOOTENV_IN_UBI := 1
+  KERNEL_IN_UBI := 1
+  KERNEL := kernel-bin | gzip
+  IMAGES := sysupgrade.itb
+  IMAGE/sysupgrade.itb := append-kernel | fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-static-with-rootfs | append-metadata
+  ARTIFACTS := preloader.bin bl31-uboot.fip
+  ARTIFACT/preloader.bin := bl2 snand-1ddr
+  ARTIFACT/bl31-uboot.fip := bl31-uboot samknows_whitebox-v9plus
 endef
-TARGET_DEVICES += samknows_whitebox_v9plus
+TARGET_DEVICES += samknows_whitebox-v9plus
 
 define Device/mediatek_mt7622-rfb1-ubi
   DEVICE_VENDOR := MediaTek

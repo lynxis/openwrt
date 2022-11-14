@@ -123,6 +123,17 @@ define U-Boot/mt7622_bananapi_bpi-r64-snand
   DEPENDS:=+trusted-firmware-a-mt7622-snand-2ddr
 endef
 
+define U-Boot/mt7622_samknows_whitebox-v9plus
+  NAME:=SamKnows Whitebox v9+
+  UBOOT_CONFIG:=mt7622_samknows_whitebox-v9plus
+  BUILD_DEVICES:=samknows_whitebox-v9plus
+  BUILD_SUBTARGET:=mt7622
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=snand
+  BL2_DDRBLOB:=1
+  DEPENDS:=+trusted-firmware-a-mt7622-snand-1ddr
+endef
+
 define U-Boot/mt7622_ubnt_unifi-6-lr
   NAME:=Ubiquiti UniFi 6 LR
   UBOOT_CONFIG:=mt7622_ubnt_unifi-6-lr
@@ -246,6 +257,7 @@ UBOOT_TARGETS := \
 	mt7622_bananapi_bpi-r64-snand \
 	mt7622_linksys_e8450 \
 	mt7622_rfb1 \
+	mt7622_samknows_whitebox-v9plus \
 	mt7622_ubnt_unifi-6-lr \
 	mt7623n_bpir2 \
 	mt7623a_unielec_u7623 \
