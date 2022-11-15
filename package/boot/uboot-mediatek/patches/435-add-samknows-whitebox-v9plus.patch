@@ -109,37 +109,37 @@ Index: u-boot-2022.10/arch/arm/dts/mt7622-samknows-whitebox-v9plus.dts
 +
 +		wifi2g {
 +			label = "wifi2g";
-+			gpios = <&pio 85 GPIO_ACTIVE_LOW>;
++			gpios = <&gpio 85 GPIO_ACTIVE_LOW>;
 +			default-state = "off";
 +		};
 +
 +		syswhite {
 +			label = "sys:white";
-+			gpios = <&pio 16 GPIO_ACTIVE_LOW>;
++			gpios = <&gpio 16 GPIO_ACTIVE_LOW>;
 +			default-state = "off";
 +		};
 +
 +		sysorange {
 +			label = "sys:orange";
-+			gpios = <&pio 19 GPIO_ACTIVE_LOW>;
++			gpios = <&gpio 19 GPIO_ACTIVE_LOW>;
 +			default-state = "on";
 +		};
 +
 +		wanwhite {
 +			label = "wan:white";
-+			gpios = <&pio 20 GPIO_ACTIVE_LOW>;
++			gpios = <&gpio 20 GPIO_ACTIVE_LOW>;
 +			default-state = "off";
 +		};
 +
 +		wanorange {
 +			label = "wan:orange";
-+			gpios = <&pio 17 GPIO_ACTIVE_LOW>;
++			gpios = <&gpio 17 GPIO_ACTIVE_LOW>;
 +			default-state = "off";
 +		};
 +
 +		usb {
 +			label = "usb:white";
-+			gpios = <&pio 18 GPIO_ACTIVE_LOW>;
++			gpios = <&gpio 18 GPIO_ACTIVE_LOW>;
 +			default-state = "off";
 +		};
 +	};
@@ -279,7 +279,7 @@ Index: u-boot-2022.10/arch/arm/dts/mt7622-samknows-whitebox-v9plus.dts
 +
 +&snand {
 +	pinctrl-names = "default";
-+	pinctrl-0 = <&snfi_pins>;
++	pinctrl-0 = <&serial_nand_pins>;
 +	status = "okay";
 +	quad-spi;
 +};
