@@ -10,10 +10,10 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +bootcmd=if pstore check ; then run boot_recovery ; else run boot_ubi ; fi
 +bootconf=config-1
 +bootdelay=0
-+bootfile=openwrt-mediatek-mt7622-samknows_whitebox_v9plus-initramfs-recovery.itb
-+bootfile_bl2=openwrt-mediatek-mt7622-samknows_whitebox_v9plus-preloader.bin
-+bootfile_fip=openwrt-mediatek-mt7622-samknows_whitebox_v9plus-bl31-uboot.fip
-+bootfile_upg=openwrt-mediatek-mt7622-samknows_whitebox_v9plus-squashfs-sysupgrade.itb
++bootfile=openwrt-mediatek-mt7622-samknows_whitebox-v9plus-initramfs-recovery.itb
++bootfile_bl2=openwrt-mediatek-mt7622-samknows_whitebox-v9plus-preloader.bin
++bootfile_fip=openwrt-mediatek-mt7622-samknows_whitebox-v9plus-bl31-uboot.fip
++bootfile_upg=openwrt-mediatek-mt7622-samknows_whitebox-v9plus-squashfs-sysupgrade.itb
 +bootled_pwr=sys:white
 +bootled_rec=sys:orange on
 +bootmenu_confirm_return=askenv - Press ENTER to return to menu ; bootmenu 60
