@@ -355,19 +355,19 @@
 
 			partition@80000 {
 				label = "fip";
-				reg = <0x80000 0x100000>;
+				reg = <0x80000 0x180000>;
 				read-only;
 			};
 
 			factory: partition@180000 {
 				label = "factory";
-				reg = <0x180000 0x80000>;
+				reg = <0x200000 0x80000>;
 				read-only;
 			};
 
 			partition@200000 {
 				label = "ubi";
-				reg = <0x200000 0x7e00000>;
+				reg = <0x280000 0x7d80000>;
 			};
 		};
 	};

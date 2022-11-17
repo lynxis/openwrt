@@ -367,7 +367,7 @@ Index: u-boot-2022.10/configs/mt7622_samknows_whitebox-v9plus_defconfig
 +CONFIG_CMD_HASH=y
 +CONFIG_CMD_SMC=y
 +CONFIG_CMD_MTDPARTS=y
-+CONFIG_MTDPARTS_DEFAULT="mtdparts=spi-nand0:512k(bl2),1024k(fip),512k(factory),-(ubi)"
++CONFIG_MTDPARTS_DEFAULT="mtdparts=spi-nand0:512k(bl2),1536k(fip),512k(factory),-(ubi)"
 +CONFIG_CMD_UBI=y
 +CONFIG_CMD_UBI_RENAME=y
 +CONFIG_ENV_IS_IN_UBI=y
