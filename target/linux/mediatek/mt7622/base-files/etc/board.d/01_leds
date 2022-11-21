@@ -10,6 +10,10 @@ linksys,e8450|\
 linksys,e8450-ubi)
 	ucidef_set_led_netdev "wan" "WAN" "inet:blue" "wan"
 	;;
+samknows,whitebox-v9plus)
+	ucidef_set_led_netdev "wan" "WAN" "wan:white" "eth0"
+	ucidef_set_led_wlan "wlan2g" "WLAN2G" "wifi2g" "phy0tpt"
+	;;
 xiaomi,redmi-router-ax6s)
 	ucidef_set_led_netdev "wan" "WAN" "blue:net" "wan"
 	;;
