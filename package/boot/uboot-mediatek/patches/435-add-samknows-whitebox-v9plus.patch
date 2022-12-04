@@ -3,7 +3,7 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 --- /dev/null
 +++ u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 @@ -0,0 +1,57 @@
-+ethaddr_factory=mtd read spi-nand0 0x40080000 0x220000 0x20000 && env readmem -b ethaddr 0x4009fff4 0x6 ; setenv ethaddr_factory
++ethaddr_factory=mtd read spi-nand0 0x40080000 0x200000 0x1000 && env readmem -b ethaddr 0x40080006 0x6 ; setenv ethaddr_factory
 +ipaddr=192.168.1.1
 +serverip=192.168.1.254
 +loadaddr=0x48000000
