@@ -427,9 +427,11 @@
 	macaddr_factory_6: macaddr@6 {
 		reg = <0x6 0x6>;
 	};
+
 	macaddr_factory_c: macaddr@c {
 		reg = <0xc 0x6>;
 	};
+
 	macaddr_factory_12: macaddr@12 {
 		reg = <0x12 0x6>;
 	};
