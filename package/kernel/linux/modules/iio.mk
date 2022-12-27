@@ -61,6 +61,20 @@ endef
 
 $(eval $(call KernelPackage,industrialio-triggered-buffer))
 
+define KernelPackage/iio-apds9300
+  TITLE:=APDS930x ambient light sensor
+  KCONFIG:= CONFIG_APDS9300
+  FILES:=$(LINUX_DIR)/drivers/iio/light/apds9300.ko
+  AUTOLOAD:=$(call AutoLoad,apds9300)
+  $(call AddDepends/iio)
+endef
+
+define KernelPackage/iio-apds9300/description
+ This driver adds support the Avago APDS930x ambient light sensors
+ connected via I2C.
+endef
+
+$(eval $(call KernelPackage,iio-apds9300))
 
 define KernelPackage/iio-ad799x
   DEPENDS:=+kmod-i2c-core +kmod-industrialio-triggered-buffer
