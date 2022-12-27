@@ -153,6 +153,22 @@ define KernelPackage/iio-am2315/description
 endef
 $(eval $(call KernelPackage,iio-am2315))
 
+define KernelPackage/iio-mma8452
+  TITLE:=MMA845x/MMA865x/FXLS8471 3-axis accelerometers
+  DEPENDS:=+kmod-industrialio-triggered-buffer
+  KCONFIG:=CONFIG_MMA8452
+  FILES:=$(LINUX_DIR)/drivers/iio/accel/mma8452.ko
+  AUTOLOAD:=$(call AutoProbe,mma8452)
+  $(call AddDepends/iio)
+endef
+define KernelPackage/iio-mma8452/description
+ This driver adds support the following Freescale / NXP 3-axis
+ accelerometers MMA8451Q, MMA8452Q, MMA8453Q, MMA8652FC, MMA8653FC,
+ FXLS8471Q connected via I2C.
+endef
+
+$(eval $(call KernelPackage,iio-mma8452))
+
 define KernelPackage/iio-mxs-lradc
   DEPENDS:=@TARGET_mxs +kmod-industrialio-triggered-buffer
   TITLE:=Freescale i.MX23/i.MX28 LRADC ADC driver
