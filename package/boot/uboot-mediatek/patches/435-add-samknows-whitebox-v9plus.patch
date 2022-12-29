@@ -2,12 +2,12 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 ===================================================================
 --- /dev/null
 +++ u-boot-2022.10/samknows_whitebox-v9plus_snand_env
-@@ -0,0 +1,57 @@
+@@ -0,0 +1,73 @@
 +ethaddr_factory=mtd read spi-nand0 0x40080000 0x200000 0x1000 && env readmem -b ethaddr 0x40080006 0x6 ; setenv ethaddr_factory
 +ipaddr=192.168.1.1
 +serverip=192.168.1.254
 +loadaddr=0x48000000
-+bootcmd=if pstore check ; then run boot_recovery ; else run boot_ubi ; fi
++bootcmd=if pstore check ; then run boot_recovery ; else run ab_boot ; fi
 +bootconf=config-1
 +bootdelay=0
 +bootfile=openwrt-mediatek-mt7622-samknows_whitebox-v9plus-initramfs-recovery.itb
@@ -23,14 +23,16 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +bootmenu_0=Initialize environment.=run _firstboot
 +bootmenu_0d=Run default boot command.=run boot_default
 +bootmenu_1=Boot system via TFTP.=run boot_tftp ; run bootmenu_confirm_return
-+bootmenu_2=Boot production system from flash.=run boot_production ; run bootmenu_confirm_return
-+bootmenu_3=Boot recovery system from flash.=run boot_recovery ; run bootmenu_confirm_return
-+bootmenu_4=Load production system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
-+bootmenu_5=Load recovery system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
-+bootmenu_6=[31mLoad BL31+U-Boot FIP via TFTP then write to flash.[0m=run boot_tftp_write_fip ; run bootmenu_confirm_return
-+bootmenu_7=[31mLoad BL2 preloader via TFTP then write to flash.[0m=run boot_tftp_write_bl2 ; run bootmenu_confirm_return
-+bootmenu_8=Reboot.=reset
-+bootmenu_9=Reset all settings to factory defaults.=run reset_factory ; reset
++bootmenu_2=Boot A/B system from flash.=run ab_boot ; run bootmenu_confirm_return
++bootmenu_3=Boot A system from flash.=run ab_prepare_data_a ; run ab_boot_a ; run bootmenu_confirm_return
++bootmenu_4=Boot B system from flash.=run ab_prepare_data_b ; run ab_boot_b ; run bootmenu_confirm_return
++bootmenu_5=Boot recovery system from flash.=run boot_recovery ; run bootmenu_confirm_return
++bootmenu_6=Load production system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_7=Load recovery system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_8=[31mLoad BL31+U-Boot FIP via TFTP then write to flash.[0m=run boot_tftp_write_fip ; run bootmenu_confirm_return
++bootmenu_9=[31mLoad BL2 preloader via TFTP then write to flash.[0m=run boot_tftp_write_bl2 ; run bootmenu_confirm_return
++bootmenu_a=Reboot.=echo reboot chosen
++bootmenu_b=Reset all settings to factory defaults.=run reset_factory ; echo reset factory ; reset
 +boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
 +boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
 +boot_production=led $bootled_pwr on ; run ubi_read_production && bootm $loadaddr#$bootconf ; led $bootled_pwr off
@@ -48,7 +50,7 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +boot_write_fip=mtd erase fip && mtd write fip $loadaddr
 +check_ubi=ubi part ubi || run ubi_format
 +reset_factory=mw $loadaddr 0x0 0x100000 ; ubi part ubi ; ubi write $loadaddr ubootenv 0x100000 ; ubi write $loadaddr ubootenv2 0x100000 ; ubi remove rootfs_data
-+ubi_format=ubi detach ; mtd erase ubi && ubi part ubi ; reset
++ubi_format=ubi detach ; mtd erase ubi && ubi part ubi ; echo reset ubi_format ; reset
 +ubi_prepare_rootfs=if ubi check rootfs_data ; then else if env exists rootfs_data_max ; then ubi create rootfs_data $rootfs_data_max dynamic || ubi create rootfs_data - dynamic ; else ubi create rootfs_data - dynamic ; fi ; fi
 +ubi_read_production=ubi read $loadaddr fit && iminfo $loadaddr && run ubi_prepare_rootfs
 +ubi_read_recovery=ubi check recovery && ubi read $loadaddr recovery
@@ -60,6 +62,20 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +_firstboot=setenv _firstboot ; run _switch_to_menu ; run ethaddr_factory ; run check_ubi ; run _init_env ; run boot_first
 +_switch_to_menu=setenv _switch_to_menu ; setenv bootdelay 3 ; setenv bootmenu_delay 3 ; setenv bootmenu_0 $bootmenu_0d ; setenv bootmenu_0d ; run _bootmenu_update_title
 +_bootmenu_update_title=setenv _bootmenu_update_title ; setenv bootmenu_title "$bootmenu_title       [33m$ver[0m"
++rootfs_data_max=0x1000000
++ab_next=a
++ab_try=
++ab_prepare_data_a=if ubi check a_rootfs_data ; then else ubi create a_rootfs_data $rootfs_data_max dynamic 0x1a ; fi
++ab_prepare_data_b=if ubi check b_rootfs_data ; then else ubi create b_rootfs_data $rootfs_data_max dynamic 0x1b ; fi
++ab_prepare_data=run ab_prepare_data_a ; run ab_prepare_data_b
++ab_data_a=fdt chosenstr openwrt,rootfs_data a_rootfs_data ; fdt chosenstr openwrt,rootfs a_fit ; fdt chosenstr u-boot,abboot a
++ab_data_b=fdt chosenstr openwrt,rootfs_data b_rootfs_data ; fdt chosenstr openwrt,rootfs b_fit ; fdt chosenstr u-boot,abboot b
++ab_tryboot_a=if test "$ab_try" = a ; then fdt chosenstr u-boot,tryboot a ; setenv ab_next b ; setenv ab_try ; saveenv ; run ab_boot_a ; fi
++ab_tryboot_b=if test "$ab_try" = b ; then fdt chosenstr u-boot,tryboot b ; setenv ab_next a ; setenv ab_try ; saveenv ; run ab_boot_b ; fi
++ab_tryboot=run ab_tryboot_a ; run ab_tryboot_b
++ab_boot_a=if ubi check a_fit ; then ubi read $loadaddr a_fit ; if iminfo $loadaddr ; then run ab_data_a ; bootm $loadaddr#$bootconf ; fi ; fi
++ab_boot_b=if ubi check b_fit ; then ubi read $loadaddr b_fit ; if iminfo $loadaddr ; then run ab_data_b ; bootm $loadaddr#$bootconf ; fi ; fi
++ab_boot=run check_ubi ; run ab_prepare_data ; run ab_tryboot ; if test "$ab_next" = a ; then run ab_boot_a ; run ab_boot_b ; run boot_recovery ; else if test "$ab_next" = b ; then run ab_boot_b ; run ab_boot_a ; run boot_recovery ; else if test "$ab_next" = recovery ; then run boot_recovery ; else run ab_boot_a ; run ab_boot_b ; run boot_recovery ; fi ; fi ; fi
 Index: u-boot-2022.10/arch/arm/dts/mt7622-samknows-whitebox-v9plus.dts
 ===================================================================
 --- /dev/null
