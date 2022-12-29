@@ -14,6 +14,10 @@ CI_ROOTPART="${CI_ROOTPART:-rootfs}"
 
 CI_ROOT_DATA_PART="${CI_ROOT_DATA_PART:-rootfs_data}"
 
+# * uboot
+# * ""
+CI_ROOT_DATA_PART_MAX="${CI_ROOT_DATA_PART_MAX:-uboot}"
+
 ubi_mknod() {
 	local dir="$1"
 	local dev="/dev/$(basename $dir)"
@@ -174,8 +178,13 @@ nand_detach_ubi() {
 nand_upgrade_prepare_ubi() {
 	local rootfs_length="$1"
 	local rootfs_type="$2"
-	local rootfs_data_max="$(fw_printenv -n rootfs_data_max 2> /dev/null)"
-	[ -n "$rootfs_data_max" ] && rootfs_data_max=$((rootfs_data_max))
+	local rootfs_data_max
+
+	if [ "$CI_ROOT_DATA_PART_MAX" = "uboot" ] ; then
+		rootfs_data_max="$(fw_printenv -n rootfs_data_max 2> /dev/null)"
+	else
+		rootfs_data_max=$((CI_ROOT_DATA_PART_MAX))
+	fi
 
 	local kernel_length="$3"
 	local has_env="${4:-0}"
