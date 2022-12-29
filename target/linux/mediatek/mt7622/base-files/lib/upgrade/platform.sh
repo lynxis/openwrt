@@ -38,8 +38,22 @@ platform_do_upgrade() {
 	xiaomi,redmi-router-ax6s)
 		nand_do_upgrade "$1"
 		;;
-	linksys,e8450-ubi|\
 	samknows,whitebox-v9plus)
+		local ubootab=$(cat /sys/firmware/devicetree/base/chosen/u-boot,bootab 2>/dev/null)
+		CI_ROOT_DATA_PART_MAX=16777216
+		case "$ubootab" in
+		a)
+			CI_KERNPART=b_fit
+			CI_ROOT_DATA_PART=b_rootfs_data
+			;;
+		b | *)
+			CI_KERNPART=a_fit
+			CI_ROOT_DATA_PART=a_rootfs_data
+			;;
+		esac
+		nand_do_upgrade "$1"
+		;;
+	linksys,e8450-ubi)
 		CI_KERNPART="fit"
 		nand_do_upgrade "$1"
 		;;
