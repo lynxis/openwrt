@@ -1,0 +1,289 @@
+From 115f1d606bc2d8c5fee7fc632889cba46231f399 Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Thu, 29 Dec 2022 18:01:21 +0100
+Subject: [PATCH 3/4] add rootfs_data_name / get_rootfs_data_name
+
+---
+ CMakeLists.txt           |  6 +++---
+ block.c                  |  7 ++++---
+ jffs2reset.c             |  4 ++--
+ libfstools/libfstools.h  |  4 ++++
+ libfstools/rootdisk.c    | 36 ++++++++++++++++++++++++++++++++++++
+ libfstools/rootfs_data.h | 14 ++++++++++++++
+ mount_root.c             |  4 ++--
+ snapshot.c               | 14 +++++++-------
+ ubi.c                    |  3 ++-
+ 9 files changed, 74 insertions(+), 18 deletions(-)
+ create mode 100644 libfstools/rootfs_data.h
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9a87979c1381..b091b05de7b3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -78,9 +78,9 @@ INSTALL(TARGETS blockd RUNTIME DESTINATION sbin)
+ ADD_EXECUTABLE(block block.c probe.c probe-libblkid.c)
+ IF(DEFINED CMAKE_UBIFS_EXTROOT)
+ 	ADD_DEFINITIONS(-DUBIFS_EXTROOT)
+-	TARGET_LINK_LIBRARIES(block blkid-tiny dl uci ubox ubus blobmsg_json ubi-utils ${json})
++	TARGET_LINK_LIBRARIES(block blkid-tiny fstools dl uci ubox ubus blobmsg_json ubi-utils ${json})
+ ELSE(DEFINED CMAKE_UBIFS_EXTROOT)
+-	TARGET_LINK_LIBRARIES(block blkid-tiny dl uci ubox ubus blobmsg_json ${json})
++	TARGET_LINK_LIBRARIES(block blkid-tiny fstools dl uci ubox ubus blobmsg_json ${json})
+ ENDIF(DEFINED CMAKE_UBIFS_EXTROOT)
+ INSTALL(TARGETS block RUNTIME DESTINATION sbin)
+ 
+@@ -93,5 +93,5 @@ TARGET_LINK_LIBRARIES(snapshot_tool fstools)
+ INSTALL(TARGETS snapshot_tool RUNTIME DESTINATION sbin)
+ 
+ ADD_EXECUTABLE(ubi ubi.c)
+-TARGET_LINK_LIBRARIES(ubi ubi-utils ubox)
++TARGET_LINK_LIBRARIES(ubi ubi-utils fstools ubox)
+ INSTALL(TARGETS ubi RUNTIME DESTINATION sbin)
+diff --git a/block.c b/block.c
+index 5e7ddf729da4..d07e71ede60b 100644
+--- a/block.c
++++ b/block.c
+@@ -44,6 +44,7 @@
+ #include <libubox/vlist.h>
+ #include <libubus.h>
+ 
++#include "libfstools/rootfs_data.h"
+ #include "probe.h"
+ 
+ #define AUTOFS_MOUNT_PATH       "/tmp/run/blockd/"
+@@ -522,7 +523,7 @@ static bool mtdblock_is_nand(char *mtdnum)
+ 	buf[strlen(buf) - 1] = '\0'; /* strip final char (newline) */
+ 
+ 	/* only return true if name differs from 'rootfs' and 'rootfs_data' */
+-	if (strcmp(buf, "rootfs") && strcmp(buf, "rootfs_data"))
++	if (strcmp(buf, "rootfs") && strcmp(buf, get_rootfs_data_name()))
+ 		return true;
+ 
+ 	/* --- CUT HERE --- */
+@@ -1658,7 +1659,7 @@ static int main_extroot(int argc, char **argv)
+ 	 */
+ 
+ 	/* Start with looking for MTD partition */
+-	find_block_mtd("rootfs_data", blkdev_path, sizeof(blkdev_path));
++	find_block_mtd(get_rootfs_data_name(), blkdev_path, sizeof(blkdev_path));
+ 	if (blkdev_path[0]) {
+ 		pr = find_block_info(NULL, NULL, blkdev_path);
+ 		if (pr && !strcmp(pr->type, "jffs2")) {
+@@ -1684,7 +1685,7 @@ static int main_extroot(int argc, char **argv)
+ 	/* ... but it also could be an UBI volume */
+ 	memset(blkdev_path, 0, sizeof(blkdev_path));
+ 	libubi = libubi_open();
+-	find_block_ubi(libubi, "rootfs_data", blkdev_path, sizeof(blkdev_path));
++	find_block_ubi(libubi, get_rootfs_data_name(), blkdev_path, sizeof(blkdev_path));
+ 	libubi_close(libubi);
+ 	if (blkdev_path[0]) {
+ 		char cfg[] = "/tmp/ubifs_cfg";
+diff --git a/jffs2reset.c b/jffs2reset.c
+index acff913409da..94c4eac68e59 100644
+--- a/jffs2reset.c
++++ b/jffs2reset.c
+@@ -131,9 +131,9 @@ int main(int argc, char **argv)
+ 		return -1;
+ 	}
+ 
+-	v = volume_find("rootfs_data");
++	v = volume_find(get_rootfs_data_name());
+ 	if (!v) {
+-		ULOG_ERR("MTD partition 'rootfs_data' not found\n");
++		ULOG_ERR("rootfs_data: MTD partition '%s' not found\n", get_rootfs_data_name());
+ 		return -1;
+ 	}
+ 
+diff --git a/libfstools/libfstools.h b/libfstools/libfstools.h
+index 41e78ec84ef5..774add372434 100644
+--- a/libfstools/libfstools.h
++++ b/libfstools/libfstools.h
+@@ -64,6 +64,10 @@ enum fs_state fs_state_get(const char *dir);
+ int fs_state_set(const char *dir, enum fs_state state);
+ void selinux_restorecon(char *overlaydir);
+ 
++#define ROOTFS_DATA_NAME_MAX 64
++extern char rootfs_data_name[];
++char *get_rootfs_data_name(void);
++
+ /* TODO: move to libubox */
+ char *getenv_default(const char *name, char *def);
+ char *read_kernel_cmdline(const char *name, char *buf, size_t bufsz);
+diff --git a/libfstools/rootdisk.c b/libfstools/rootdisk.c
+index 9f2317f14e8d..0bc093cf9336 100644
+--- a/libfstools/rootdisk.c
++++ b/libfstools/rootdisk.c
+@@ -12,6 +12,7 @@
+  */
+ 
+ #include "common.h"
++#include "rootfs_data.h"
+ 
+ #include <linux/loop.h>
+ 
+@@ -237,3 +238,38 @@ static struct driver rootdisk_driver = {
+ };
+ 
+ DRIVER(rootdisk_driver);
++
++char rootfs_data_name[ROOTFS_DATA_NAME_MAX] = {};
++
++/* find the volume name of the rootfs_data
++ *
++ * The name could be provided (high prio first):
++ * * device tree / chosen
++ * * kernel command line openwrt,rootfs_data=fooo
++ * * environment variable ROOTFS_DATA_VOL=foo
++ * * default to "rootfs_data"
++ */
++char
++*get_rootfs_data_name(void)
++{
++	char *name = NULL;
++
++	name = read_string_from_file("/sys/firmware/devicetree/base/chosen", "openwrt,rootfs_data", rootfs_data_name, sizeof(rootfs_data_name));
++	if (name && strlen(name) > 0)
++		return name;
++
++	name = read_kernel_cmdline("rootfs_data", rootfs_data_name, sizeof(rootfs_data_name));
++	if (name && strlen(name) > 0)
++		return name;
++
++	name = getenv_default("ROOTFS_DATA_VOL", NULL);
++	if (name && strlen(name) > 0) {
++		strncpy(rootfs_data_name, name, sizeof(rootfs_data_name) - 1);
++		rootfs_data_name[sizeof(rootfs_data_name) - 1] = '\0';
++		return rootfs_data_name;
++	}
++
++	strncpy(rootfs_data_name, "rootfs_data", sizeof(rootfs_data_name));
++	return rootfs_data_name;
++}
++
+diff --git a/libfstools/rootfs_data.h b/libfstools/rootfs_data.h
+new file mode 100644
+index 000000000000..211b157e86cb
+--- /dev/null
++++ b/libfstools/rootfs_data.h
+@@ -0,0 +1,14 @@
++#ifndef _FS_ROOTFS_DATA_H__
++#define _FS_ROOTFS_DATA_H__
++
++/* dup for files which would overwrite library function with static */
++
++#define ROOTFS_DATA_NAME_MAX 64
++extern char rootfs_data_name[];
++char *get_rootfs_data_name(void);
++
++/* TODO: move getenv_default and read_kernel_cmdline to libubox */
++char *getenv_default(const char *name, char *def);
++char *read_kernel_cmdline(const char *name, char *buf, size_t bufsz);
++
++#endif /* _FS_ROOTFS_DATA_H__ */
+diff --git a/mount_root.c b/mount_root.c
+index d343909a9e0c..aff307132f72 100644
+--- a/mount_root.c
++++ b/mount_root.c
+@@ -31,7 +31,7 @@ static int
+ start(int argc, char *argv[1])
+ {
+ 	struct volume *root;
+-	struct volume *data = volume_find("rootfs_data");
++	struct volume *data = volume_find(get_rootfs_data_name());
+ 	struct stat s;
+ 
+ 	if (!getenv("PREINIT") && stat("/tmp/.preinit", &s))
+@@ -96,7 +96,7 @@ stop(int argc, char *argv[1])
+ static int
+ done(int argc, char *argv[1])
+ {
+-	struct volume *v = volume_find("rootfs_data");
++	struct volume *v = volume_find(get_rootfs_data_name());
+ 
+ 	if (!v)
+ 		return -1;
+diff --git a/snapshot.c b/snapshot.c
+index df555e2d7d79..e28cc03ab00b 100644
+--- a/snapshot.c
++++ b/snapshot.c
+@@ -39,7 +39,7 @@
+ static int
+ config_write(int argc, char **argv)
+ {
+-	struct volume *v = volume_find("rootfs_data");
++	struct volume *v = volume_find(get_rootfs_data_name());
+ 	int ret;
+ 
+ 	if (!v)
+@@ -56,7 +56,7 @@ config_write(int argc, char **argv)
+ static int
+ config_read(int argc, char **argv)
+ {
+-	struct volume *v = volume_find("rootfs_data");
++	struct volume *v = volume_find(get_rootfs_data_name());
+ 	struct file_header conf, sentinel;
+ 	int next, block, ret = 0;
+ 	uint32_t seq;
+@@ -84,7 +84,7 @@ config_read(int argc, char **argv)
+ static int
+ snapshot_write(int argc, char **argv)
+ {
+-	struct volume *v = volume_find("rootfs_data");
++	struct volume *v = volume_find(get_rootfs_data_name());
+ 	int block, ret;
+ 	uint32_t seq;
+ 
+@@ -117,9 +117,9 @@ snapshot_mark(int argc, char **argv)
+ 	if (getchar() != 'y')
+ 		return -1;
+ 
+-	v = volume_find("rootfs_data");
++	v = volume_find(get_rootfs_data_name());
+ 	if (!v) {
+-		ULOG_ERR("MTD partition 'rootfs_data' not found\n");
++		ULOG_ERR("rootfs_data: MTD partition '%s' not found\n", get_rootfs_data_name());
+ 		return -1;
+ 	}
+ 
+@@ -146,7 +146,7 @@ snapshot_mark(int argc, char **argv)
+ static int
+ snapshot_read(int argc, char **argv)
+ {
+-	struct volume *v = volume_find("rootfs_data");;
++	struct volume *v = volume_find(get_rootfs_data_name());;
+ 	int block = 0, ret = 0;
+ 	char file[64];
+ 
+@@ -179,7 +179,7 @@ out:
+ static int
+ snapshot_info(void)
+ {
+-	struct volume *v = volume_find("rootfs_data");
++	struct volume *v = volume_find(get_rootfs_data_name());
+ 	struct file_header hdr = { 0 }, conf;
+ 	int block = 0;
+ 
+diff --git a/ubi.c b/ubi.c
+index f0dfc5cc6681..6731d4c9a5ff 100644
+--- a/ubi.c
++++ b/ubi.c
+@@ -24,6 +24,7 @@
+ #include <libubox/ulog.h>
+ 
+ #include "libubi/libubi-tiny.h"
++#include "libfstools/rootfs_data.h"
+ 
+ static int print_usage(void)
+ {
+@@ -326,7 +327,7 @@ int main(int argc, char **argv)
+ 		return main_image("rootfs", argv[2], NULL);
+ 
+ 	} else if (!strcmp(argv[1], "overlay")) {
+-		return main_image("rootfs", argv[2], "rootfs_data");
++		return main_image("rootfs", argv[2], get_rootfs_data_name());
+ 
+ 	} else if (!strcmp(argv[1], "detach")) {
+ 		return main_detach(argv[2]);
+-- 
+2.39.0
+

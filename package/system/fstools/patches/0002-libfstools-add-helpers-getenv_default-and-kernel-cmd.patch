@@ -1,0 +1,97 @@
+From 33ea9ba8b214155083ea5912d6f52635feefc98d Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Wed, 28 Dec 2022 20:57:49 +0100
+Subject: [PATCH 2/4] libfstools: add helpers getenv_default and kernel cmdline
+ parser
+
+TODO: move to ubox
+---
+ libfstools/common.c     | 58 +++++++++++++++++++++++++++++++++++++++++
+ libfstools/libfstools.h |  4 +++
+ 2 files changed, 62 insertions(+)
+
+diff --git a/libfstools/common.c b/libfstools/common.c
+index e5b7bc38c2eb..3b225728d490 100644
+--- a/libfstools/common.c
++++ b/libfstools/common.c
+@@ -3,6 +3,64 @@
+ #include "common.h"
+ #define BUFLEN 128
+ 
++char
++*getenv_default(const char *name, char *def)
++{
++	char *val = getenv(name);
++	if (!val)
++		return def;
++
++	return val;
++}
++
++/* a simple and slow kernel cmdline key=value parser returns first match
++ *
++ * Example kernel cmdlines:
++ *
++ * "foo=42" -> returns buf
++ * "foo=" -> buf[0] = '\0', returns buf
++ * "foo=42 bar=42" -> returns buf
++ * "foo" -> invalid, returns NULL
++ * "foo=42 foo=23" -> takes foo=42, ignores foo=23
++ * "bar=23 foo=42" -> returns buf
++ */
++char
++*read_kernel_cmdline(const char *name, char *buf, size_t bufsz)
++{
++	char cmdline[1024] = {};
++	char *pos, *tmp, *end;
++	size_t namesz = strlen(name);
++
++	tmp = read_string_from_file("/proc", "cmdline", cmdline, sizeof(cmdline));
++	if (!tmp)
++		return NULL;
++
++	end = cmdline + strlen(cmdline);
++	for (pos = cmdline; pos < end; pos += namesz) {
++		tmp = strstr(pos, name);
++		if (!tmp)
++			return NULL;
++
++		/* cmdline: 'foo' => invalid. A equal is required */
++		if (tmp + namesz + 1 >= end)
++			continue;
++
++		if (*(tmp + namesz + 1) == '=' && (((tmp - 1) < cmdline) || *(tmp - 1) == ' ')) {
++			pos = tmp + namesz;
++
++			/* check for foo=23 bar=42 */
++			tmp = strstr(pos, " ");
++			if (tmp)
++				*tmp = '\0';
++
++			strncpy(buf, pos, bufsz);
++			return buf;
++		}
++	}
++
++	return NULL;
++}
++
+ int
+ read_uint_from_file(char *dirname, char *filename, unsigned int *i)
+ {
+diff --git a/libfstools/libfstools.h b/libfstools/libfstools.h
+index 340e2dca3a25..41e78ec84ef5 100644
+--- a/libfstools/libfstools.h
++++ b/libfstools/libfstools.h
+@@ -64,4 +64,8 @@ enum fs_state fs_state_get(const char *dir);
+ int fs_state_set(const char *dir, enum fs_state state);
+ void selinux_restorecon(char *overlaydir);
+ 
++/* TODO: move to libubox */
++char *getenv_default(const char *name, char *def);
++char *read_kernel_cmdline(const char *name, char *buf, size_t bufsz);
++
+ #endif
+-- 
+2.39.0
+

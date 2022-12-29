@@ -1,0 +1,39 @@
+From 0759561f3bce15199c77cff598ddb1094b2fb2c7 Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Wed, 28 Dec 2022 22:01:50 +0100
+Subject: [PATCH 4/4] mount_root: add print rootfs_data
+
+To get the name of the rootfs_data
+---
+ mount_root.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/mount_root.c b/mount_root.c
+index aff307132f72..ccd56cbb3387 100644
+--- a/mount_root.c
++++ b/mount_root.c
+@@ -117,6 +117,13 @@ done(int argc, char *argv[1])
+ 	return 0;
+ }
+ 
++static int
++print_rootfs_data()
++{
++	printf("%s\n", get_rootfs_data_name());
++	return 0;
++}
++
+ int main(int argc, char **argv)
+ {
+ 	if (argc < 2)
+@@ -127,5 +134,7 @@ int main(int argc, char **argv)
+ 		return stop(argc, argv);
+ 	if (!strcmp(argv[1], "done"))
+ 		return done(argc, argv);
++	if (argc == 3 && !strcmp(argv[1], "print") && (!strcmp(argv[2], "rootfs_data")))
++		return print_rootfs_data();
+ 	return -1;
+ }
+-- 
+2.39.0
+
