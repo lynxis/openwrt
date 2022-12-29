@@ -1,0 +1,141 @@
+Index: u-boot-2022.10/include/fdt_support.h
+===================================================================
+--- u-boot-2022.10.orig/include/fdt_support.h
++++ u-boot-2022.10/include/fdt_support.h
+@@ -51,6 +51,8 @@ int fdt_root(void *fdt);
+  * Return: 0 if ok, or -FDT_ERR_... on error
+  */
+ int fdt_chosen(void *fdt);
++int fdt_chosen_set_str(char *key, char *value);
++int fdt_chosen_set_int(char *key, u32 value);
+ 
+ /**
+  * Add initrd information to the FDT before booting the OS.
+Index: u-boot-2022.10/cmd/fdt.c
+===================================================================
+--- u-boot-2022.10.orig/cmd/fdt.c
++++ u-boot-2022.10/cmd/fdt.c
+@@ -206,6 +206,14 @@ static int do_fdt(struct cmd_tbl *cmdtp,
+ 		return CMD_RET_SUCCESS;
+ 	}
+ 
++	else if (strncmp(argv[1], "chosenstr", 3) == 0) {
++		if ((argc != 4))
++			return CMD_RET_USAGE;
++
++		fdt_chosen_set_str(argv[2], argv[3]);
++		return 0;
++	}
++
+ 	if (!working_fdt) {
+ 		puts("No FDT memory address configured. Please configure\n"
+ 		     "the FDT address via \"fdt addr <address>\" command.\n"
+@@ -1123,6 +1131,8 @@ static char fdt_help_text[] =
+ 	"fdt rsvmem delete <index>           - Delete a mem reserves\n"
+ 	"fdt chosen [<start> <size>]         - Add/update the /chosen branch in the tree\n"
+ 	"                                        <start>/<size> - initrd start addr/size\n"
++	"fdt chosenu32 key value             - Add key to /chosen with u32 value\n"
++	"fdt chosenstr key value             - Add key to /chosen with string value\n"
+ #if defined(CONFIG_FIT_SIGNATURE)
+ 	"fdt checksign [<addr>]              - check FIT signature\n"
+ 	"                                        <start> - addr of key blob\n"
+Index: u-boot-2022.10/common/fdt_support.c
+===================================================================
+--- u-boot-2022.10.orig/common/fdt_support.c
++++ u-boot-2022.10/common/fdt_support.c
+@@ -21,6 +21,22 @@
+ #include <exports.h>
+ #include <fdtdec.h>
+ #include <version.h>
++#include <malloc.h>
++#include <linux/list.h>
++
++static LIST_HEAD(chosen_entries);
++
++enum fdt_chosen_type {
++	FDT_CHOSEN_TYPE_U32,
++	FDT_CHOSEN_TYPE_STR,
++};
++struct fdt_chosen_entry {
++	struct list_head list;
++	enum fdt_chosen_type type;
++	char *key;
++	char *str;
++	u32 u32;
++};
+ 
+ /**
+  * fdt_getprop_u32_default_node - Return a node's property or a default
+@@ -269,6 +285,32 @@ int fdt_initrd(void *fdt, ulong initrd_s
+ 	return 0;
+ }
+ 
++int fdt_chosen_set_str(char *key, char *value)
++{
++	struct fdt_chosen_entry *entry = calloc(1, sizeof(*entry));
++	if (!entry)
++		return 1;
++
++	entry->type = FDT_CHOSEN_TYPE_STR;
++	entry->key = strdup(key);
++	entry->str = strdup(value);
++	list_add_tail(&entry->list, &chosen_entries);
++	return 0;
++}
++
++int fdt_chosen_set_int(char *key, u32 value)
++{
++	struct fdt_chosen_entry *entry = calloc(1, sizeof(*entry));
++	if (!entry)
++		return 1;
++
++	entry->type = FDT_CHOSEN_TYPE_U32;
++	entry->key = strdup(key);
++	entry->u32 = value;
++	list_add_tail(&entry->list, &chosen_entries);
++	return 0;
++}
++
+ /**
+  * board_fdt_chosen_bootargs - boards may override this function to use
+  *                             alternative kernel command line arguments
+@@ -284,6 +326,7 @@ int fdt_chosen(void *fdt)
+ 	int   nodeoffset;
+ 	int   err;
+ 	char  *str;		/* used to set string properties */
++	struct list_head *entry;
+ 
+ 	err = fdt_check_header(fdt);
+ 	if (err < 0) {
+@@ -319,6 +362,31 @@ int fdt_chosen(void *fdt)
+ 		}
+ 	}
+ 
++	list_for_each(entry, &chosen_entries) {
++		struct fdt_chosen_entry *chosen = list_entry(entry, struct fdt_chosen_entry, list);
++		switch (chosen->type) {
++		case FDT_CHOSEN_TYPE_STR:
++			err = fdt_setprop_string(fdt, nodeoffset, chosen->key, chosen->str);
++			if (err < 0) {
++				printf("WARNING: could not set fdt %s to %s. Error: %s.\n",
++						chosen->key, chosen->str,
++						fdt_strerror(err));
++				continue;
++			}
++			break;
++		case FDT_CHOSEN_TYPE_U32:
++			err = fdt_setprop_u32(fdt, nodeoffset, chosen->key, chosen->u32);
++			if (err < 0) {
++				printf("WARNING: could not set fdt %s to %d. Error: %s.\n",
++						chosen->key, chosen->u32,
++						fdt_strerror(err));
++				continue;
++			}
++			break;
++		}
++	}
++
++
+ 	/* add u-boot version */
+ 	err = fdt_setprop(fdt, nodeoffset, "u-boot,version", PLAIN_VERSION,
+ 			  strlen(PLAIN_VERSION) + 1);
