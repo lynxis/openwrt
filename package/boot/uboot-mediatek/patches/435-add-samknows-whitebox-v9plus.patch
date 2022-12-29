@@ -2,7 +2,7 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 ===================================================================
 --- /dev/null
 +++ u-boot-2022.10/samknows_whitebox-v9plus_snand_env
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,71 @@
 +ethaddr_factory=mtd read spi-nand0 0x40080000 0x200000 0x1000 && env readmem -b ethaddr 0x40080006 0x6 ; setenv ethaddr_factory
 +ipaddr=192.168.1.1
 +serverip=192.168.1.254
@@ -24,8 +24,8 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +bootmenu_0d=Run default boot command.=run boot_default
 +bootmenu_1=Boot system via TFTP.=run boot_tftp ; run bootmenu_confirm_return
 +bootmenu_2=Boot A/B system from flash.=run ab_boot ; run bootmenu_confirm_return
-+bootmenu_3=Boot A system from flash.=run ab_prepare_data_a ; run ab_boot_a ; run bootmenu_confirm_return
-+bootmenu_4=Boot B system from flash.=run ab_prepare_data_b ; run ab_boot_b ; run bootmenu_confirm_return
++bootmenu_3=Boot A system from flash.=run check_ubi ; run ab_prepare_data_a ; run ab_boot_a ; run bootmenu_confirm_return
++bootmenu_4=Boot B system from flash.=run check_ubi ; run ab_prepare_data_b ; run ab_boot_b ; run bootmenu_confirm_return
 +bootmenu_5=Boot recovery system from flash.=run boot_recovery ; run bootmenu_confirm_return
 +bootmenu_6=Load production system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
 +bootmenu_7=Load recovery system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
@@ -35,13 +35,13 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +bootmenu_b=Reset all settings to factory defaults.=run reset_factory ; echo reset factory ; reset
 +boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
 +boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
-+boot_production=led $bootled_pwr on ; run ubi_read_production && bootm $loadaddr#$bootconf ; led $bootled_pwr off
-+boot_recovery=led $bootled_rec on ; run ubi_read_recovery ; bootm $loadaddr#$bootconf ; ubi remove recovery ; led $bootled_rec off
++boot_production=led $bootled_pwr on ; run check_ubi ; run ab_boot ; led $bootled_pwr off
++boot_recovery=led $bootled_rec on ; run check_ubi ; run ubi_read_recovery ; bootm $loadaddr#$bootconf ; ubi remove recovery ; led $bootled_rec off
 +boot_serial_write_bl2=loadx $loadaddr 115200 && run boot_write_bl2
 +boot_serial_write_fip=loadx $loadaddr 115200 && run boot_write_fip
 +boot_tftp=tftpboot $loadaddr $bootfile && bootm $loadaddr#$bootconf
 +boot_tftp_forever=led $bootled_rec on ; while true ; do run boot_tftp_recovery ; sleep 1 ; done
-+boot_tftp_production=tftpboot $loadaddr $bootfile_upg && iminfo $loadaddr && ubi part ubi && run ubi_write_production ubi_prepare_rootfs ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
++boot_tftp_production=tftpboot $loadaddr $bootfile_upg && iminfo $loadaddr && ubi part ubi && run ab_write_a ; if env exists noboot ; then else ab_boot_a ; fi
 +boot_tftp_recovery=tftpboot $loadaddr $bootfile && iminfo $loadaddr && ubi part ubi && run ubi_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
 +boot_tftp_write_bl2=tftpboot $loadaddr $bootfile_bl2 && run boot_write_bl2
 +boot_tftp_write_fip=tftpboot $loadaddr $bootfile_fip && run boot_write_fip
@@ -49,14 +49,12 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +boot_write_bl2=mtd erase bl2 && mtd write spi-nand0 $loadaddr 0x0 0x20000 && mtd write spi-nand0 $loadaddr 0x20000 0x20000 && mtd write spi-nand0 $loadaddr 0x40000 0x20000 && mtd write spi-nand0 $loadaddr 0x60000 0x20000
 +boot_write_fip=mtd erase fip && mtd write fip $loadaddr
 +check_ubi=ubi part ubi || run ubi_format
-+reset_factory=mw $loadaddr 0x0 0x100000 ; ubi part ubi ; ubi write $loadaddr ubootenv 0x100000 ; ubi write $loadaddr ubootenv2 0x100000 ; ubi remove rootfs_data
++reset_factory=mw $loadaddr 0x0 0x100000 ; ubi part ubi ; ubi write $loadaddr ubootenv 0x100000 ; ubi write $loadaddr ubootenv2 0x100000 ; ubi remove a_rootfs_data ; ubi remove b_rootfs_data
 +ubi_format=ubi detach ; mtd erase ubi && ubi part ubi ; echo reset ubi_format ; reset
-+ubi_prepare_rootfs=if ubi check rootfs_data ; then else if env exists rootfs_data_max ; then ubi create rootfs_data $rootfs_data_max dynamic || ubi create rootfs_data - dynamic ; else ubi create rootfs_data - dynamic ; fi ; fi
-+ubi_read_production=ubi read $loadaddr fit && iminfo $loadaddr && run ubi_prepare_rootfs
 +ubi_read_recovery=ubi check recovery && ubi read $loadaddr recovery
-+ubi_remove_rootfs=ubi check rootfs_data && ubi remove rootfs_data
-+ubi_write_production=ubi check fit && env exists replacevol && ubi remove fit ; if ubi check fit ; then else run ubi_remove_rootfs ; ubi create fit $filesize dynamic && ubi write $loadaddr fit $filesize ; fi
-+ubi_write_recovery=ubi check recovery && env exists replacevol && ubi remove recovery ; if ubi check recovery ; then else run ubi_remove_rootfs ; ubi create recovery $filesize dynamic && ubi write $loadaddr recovery $filesize ; fi
++ab_remove_rootfs_a=ubi check a_rootfs_data && ubi remove a_rootfs_data
++ab_write_a=ubi check a_fit && env exists replacevol && ubi remove a_fit ; if ubi check a_fit ; then else run ab_remove_rootfs_a ; ubi create a_fit $filesize dynamic && ubi write $loadaddr a_fit $filesize && setenv ab_next a ; fi
++ubi_write_recovery=ubi check recovery && env exists replacevol && ubi remove recovery ; if ubi check recovery ; then else run ab_remove_rootfs_a ; ubi create recovery $filesize dynamic && ubi write $loadaddr recovery $filesize ; fi
 +_create_env=ubi create ubootenv 0x100000 dynamic ; ubi create ubootenv2 0x100000 dynamic
 +_init_env=setenv _init_env ; if ubi check ubootenv && ubi check ubootenv2 ; then else run _create_env ; fi ; setenv _create_env ; saveenv || run ubi_format ; saveenv || run ubi_format
 +_firstboot=setenv _firstboot ; run _switch_to_menu ; run ethaddr_factory ; run check_ubi ; run _init_env ; run boot_first
