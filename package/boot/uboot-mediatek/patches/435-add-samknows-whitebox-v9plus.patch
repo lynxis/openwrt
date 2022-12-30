@@ -27,22 +27,22 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +bootmenu_3=Boot A system from flash.=run check_ubi ; run ab_prepare_data_a ; run ab_boot_a ; run bootmenu_confirm_return
 +bootmenu_4=Boot B system from flash.=run check_ubi ; run ab_prepare_data_b ; run ab_boot_b ; run bootmenu_confirm_return
 +bootmenu_5=Boot recovery system from flash.=run boot_recovery ; run bootmenu_confirm_return
-+bootmenu_6=Load production system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
-+bootmenu_7=Load recovery system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_6=Load production system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_write_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
++bootmenu_7=Load recovery system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_write_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
 +bootmenu_8=[31mLoad BL31+U-Boot FIP via TFTP then write to flash.[0m=run boot_tftp_write_fip ; run bootmenu_confirm_return
 +bootmenu_9=[31mLoad BL2 preloader via TFTP then write to flash.[0m=run boot_tftp_write_bl2 ; run bootmenu_confirm_return
 +bootmenu_a=Reboot.=echo reboot chosen
 +bootmenu_b=Reset all settings to factory defaults.=run reset_factory ; echo reset factory ; reset
-+boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
++boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_write_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
 +boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
 +boot_production=led $bootled_pwr on ; run check_ubi ; run ab_boot ; led $bootled_pwr off
 +boot_recovery=led $bootled_rec on ; run check_ubi ; run ubi_read_recovery ; bootm $loadaddr#$bootconf ; ubi remove recovery ; led $bootled_rec off
 +boot_serial_write_bl2=loadx $loadaddr 115200 && run boot_write_bl2
 +boot_serial_write_fip=loadx $loadaddr 115200 && run boot_write_fip
 +boot_tftp=tftpboot $loadaddr $bootfile && bootm $loadaddr#$bootconf
-+boot_tftp_forever=led $bootled_rec on ; while true ; do run boot_tftp_recovery ; sleep 1 ; done
-+boot_tftp_production=tftpboot $loadaddr $bootfile_upg && iminfo $loadaddr && ubi part ubi && run ab_write_a ; if env exists noboot ; then else ab_boot_a ; fi
-+boot_tftp_recovery=tftpboot $loadaddr $bootfile && iminfo $loadaddr && ubi part ubi && run ubi_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
++boot_tftp_forever=led $bootled_rec on ; while true ; do run boot_tftp_write_recovery ; sleep 1 ; done
++boot_tftp_write_production=tftpboot $loadaddr $bootfile_upg && iminfo $loadaddr && ubi part ubi && run ab_write_a ; if env exists noboot ; then else ab_boot_a ; fi
++boot_tftp_write_recovery=tftpboot $loadaddr $bootfile && iminfo $loadaddr && ubi part ubi && run ubi_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
 +boot_tftp_write_bl2=tftpboot $loadaddr $bootfile_bl2 && run boot_write_bl2
 +boot_tftp_write_fip=tftpboot $loadaddr $bootfile_fip && run boot_write_fip
 +boot_ubi=ubi part ubi && run boot_production ; run boot_recovery
