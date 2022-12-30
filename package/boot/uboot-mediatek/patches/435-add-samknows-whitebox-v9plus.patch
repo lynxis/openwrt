@@ -2,12 +2,12 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 ===================================================================
 --- /dev/null
 +++ u-boot-2022.10/samknows_whitebox-v9plus_snand_env
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,72 @@
 +ethaddr_factory=mtd read spi-nand0 0x40080000 0x200000 0x1000 && env readmem -b ethaddr 0x40080006 0x6 ; setenv ethaddr_factory
 +ipaddr=192.168.1.1
 +serverip=192.168.1.254
 +loadaddr=0x48000000
-+bootcmd=if pstore check ; then run boot_recovery ; else run ab_boot ; fi
++bootcmd=run check_button ; if pstore check ; then run boot_recovery ; else run ab_boot ; fi
 +bootconf=config-1
 +bootdelay=0
 +bootfile=openwrt-mediatek-mt7622-samknows_whitebox-v9plus-initramfs-recovery.itb
@@ -48,6 +48,7 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +boot_ubi=ubi part ubi && run boot_production ; run boot_recovery
 +boot_write_bl2=mtd erase bl2 && mtd write spi-nand0 $loadaddr 0x0 0x20000 && mtd write spi-nand0 $loadaddr 0x20000 0x20000 && mtd write spi-nand0 $loadaddr 0x40000 0x20000 && mtd write spi-nand0 $loadaddr 0x60000 0x20000
 +boot_write_fip=mtd erase fip && mtd write fip $loadaddr
++check_button=if button wps ; then if button reset ; then boot_tftp_forever ; fi ; else if button reset ; then run boot_recovery ; fi
 +check_ubi=ubi part ubi || run ubi_format
 +reset_factory=mw $loadaddr 0x0 0x100000 ; ubi part ubi ; ubi write $loadaddr ubootenv 0x100000 ; ubi write $loadaddr ubootenv2 0x100000 ; ubi remove a_rootfs_data ; ubi remove b_rootfs_data
 +ubi_format=ubi detach ; mtd erase ubi && ubi part ubi ; echo reset ubi_format ; reset
