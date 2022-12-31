@@ -8,7 +8,7 @@ boot() {
 		mtd erase senv || true
 		;;
 	samknows,whitebox-v9plus)
-		local ubootab="$(cat /sys/firmware/devicetree/base/chosen/u-boot,bootab 2>/dev/null)"
+		local ubootab="$(cat /sys/firmware/devicetree/base/chosen/u-boot,abboot 2>/dev/null)"
 		case "$ubootab" in
 		a | b)
 			fw_setenv ab_next "$ubootab"
