@@ -1,3 +1,5 @@
+RAMFS_COPY_BIN='fw_printenv fw_setenv'
+RAMFS_COPY_DATA='/etc/fw_env.config /var/lock/fw_printenv.lock'
 REQUIRE_IMAGE_METADATA=1
 
 platform_do_upgrade() {
@@ -45,10 +47,12 @@ platform_do_upgrade() {
 		a)
 			CI_KERNPART=b_fit
 			CI_ROOT_DATA_PART=b_rootfs_data
+			fw_setenv ab_try b
 			;;
 		b | *)
 			CI_KERNPART=a_fit
 			CI_ROOT_DATA_PART=a_rootfs_data
+			fw_setenv ab_try a
 			;;
 		esac
 		nand_do_upgrade "$1"
