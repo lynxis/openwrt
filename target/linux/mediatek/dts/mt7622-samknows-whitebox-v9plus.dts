@@ -349,19 +349,19 @@
 			partition@0 {
 				label = "bl2";
 				reg = <0x0 0x80000>;
-				read-only;
+				//read-only;
 			};
 
 			partition@80000 {
 				label = "fip";
 				reg = <0x80000 0x180000>;
-				read-only;
+				//read-only;
 			};
 
 			factory: partition@180000 {
 				label = "factory";
 				reg = <0x200000 0x80000>;
-				read-only;
+				//read-only;
 			};
 
 			partition@200000 {
