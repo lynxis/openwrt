@@ -16,7 +16,8 @@
 	};
 
 	chosen {
-		bootargs = "swiotlb=512";
+		stdout-path = "serial0:115200n8";
+		bootargs = "earlycon=uart8250,mmio32,0x11002000 console=ttyS0,115200n1 swiotlb=512";
 	};
 
 	cpus {
@@ -280,7 +281,7 @@
 
 	uart2_pins: uart2-pins {
 		mux {
-			function = "gpio";
+			function = "uart";
 			groups = "uart2_1_tx_rx" ;
 		};
 	};
