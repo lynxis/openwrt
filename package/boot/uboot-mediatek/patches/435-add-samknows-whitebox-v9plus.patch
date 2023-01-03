@@ -54,7 +54,7 @@ Index: u-boot-2022.10/samknows_whitebox-v9plus_snand_env
 +ubi_format=ubi detach ; mtd erase ubi && ubi part ubi ; echo reset ubi_format ; reset
 +ubi_read_recovery=ubi check recovery && ubi read $loadaddr recovery
 +ab_remove_rootfs_a=ubi check a_rootfs_data && ubi remove a_rootfs_data
-+ab_write_a=ubi check a_fit && env exists replacevol && ubi remove a_fit ; if ubi check a_fit ; then else run ab_remove_rootfs_a ; ubi create a_fit $filesize dynamic && ubi write $loadaddr a_fit $filesize && setenv ab_next a ; fi
++ab_write_a=ubi check a_fit && env exists replacevol && ubi remove a_fit ; if ubi check a_fit ; then else run ab_remove_rootfs_a ; ubi create a_fit $filesize dynamic && ubi write $loadaddr a_fit $filesize && setenv ab_next a && saveenv ; fi
 +ubi_write_recovery=ubi check recovery && env exists replacevol && ubi remove recovery ; if ubi check recovery ; then else ubi create recovery $filesize dynamic && ubi write $loadaddr recovery $filesize ; fi
 +_create_env=ubi create ubootenv 0x100000 dynamic ; ubi create ubootenv2 0x100000 dynamic
 +_init_env=setenv _init_env ; if ubi check ubootenv && ubi check ubootenv2 ; then else run _create_env ; fi ; setenv _create_env ; saveenv || run ubi_format ; saveenv || run ubi_format
