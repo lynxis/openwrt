@@ -1,0 +1,4 @@
+## SamKnows
+CONFIG_PACKAGE_samknows-base-files-skwb9p=y
+CONFIG_PACKAGE_samknows_pstore-reporter=y
+CONFIG_PACKAGE_samknows_recovery-upgrade-nand=y

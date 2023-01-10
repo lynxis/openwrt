@@ -1,0 +1,9 @@
+## Unit
+CONFIG_TARGET_mediatek=y
+CONFIG_TARGET_mediatek_mt7622=y
+CONFIG_TARGET_mediatek_mt7622_DEVICE_samknows_whitebox-v9plus=y
+
+## Build
+CONFIG_IMAGEOPT=y
+CONFIG_PREINITOPT=y
+CONFIG_TARGET_PREINIT_DISABLE_FAILSAFE=y

@@ -1,0 +1,25 @@
+## Build
+CONFIG_SDK=y
+
+## C++
+CONFIG_PACKAGE_libstdcpp=y
+
+## Busybox
+CONFIG_BUSYBOX_CUSTOM=y
+CONFIG_BUSYBOX_CONFIG_ASH_RANDOM_SUPPORT=y
+CONFIG_BUSYBOX_CONFIG_TIMEOUT=y
+
+## Libraries
+CONFIG_PACKAGE_libpcap=y
+
+## SSL
+CONFIG_LIBCURL_OPENSSL=y
+CONFIG_PACKAGE_libustream-openssl=y
+# CONFIG_PACKAGE_libustream-wolfssl is not set
+
+## Disable
+CONFIG_BUSYBOX_CONFIG_FEATURE_NTPD_SERVER=n
+
+## SamKnows
+CONFIG_PACKAGE_samknows-base-files=y
+CONFIG_PACKAGE_samknows-base-files-skwb9p=y
