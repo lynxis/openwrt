@@ -38,6 +38,14 @@ define Build/mt7986-gpt
 	rm $@.tmp
 endef
 
+define Build/append-gl-metadata
+	$(if $(SUPPORTED_DEVICES),-echo $(call metadata_gl_json,$(SUPPORTED_DEVICES)) | fwtool -I - $@)
+	[ ! -s "$(BUILD_KEY)" -o ! -s "$@" ] || { \
+		usign -S -m "$@" -s "$(BUILD_KEY)" -x "$@.sig" ;\
+		fwtool -S "$@.sig" "$@" ;\
+	}
+endef
+
 define Device/bananapi_bpi-r3
   DEVICE_VENDOR := Bananapi
   DEVICE_MODEL := BPi-R3
@@ -83,6 +91,24 @@ define Device/bananapi_bpi-r3
   DTC_FLAGS += -@ --space 32768
 endef
 TARGET_DEVICES += bananapi_bpi-r3
+
+define Device/glinet_gl-mt3000
+  DEVICE_VENDOR := GL.iNet
+  DEVICE_MODEL := GL-MT3000
+  DEVICE_DTS := mt7981-gl-mt3000
+  DEVICE_DTS_DIR := ../dts
+  SUPPORTED_DEVICES += glinet,mt3000-snand
+  DEVICE_PACKAGES :=kmod-hwmon-pwmfan kmod-usb3
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  IMAGE_SIZE := 65536k
+  KERNEL_IN_UBI := 1
+  IMAGES += factory.bin
+  IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-gl-metadata
+endef
+TARGET_DEVICES += glinet_gl-mt3000
 
 define Device/mediatek_mt7986a-rfb-nand
   DEVICE_VENDOR := MediaTek
