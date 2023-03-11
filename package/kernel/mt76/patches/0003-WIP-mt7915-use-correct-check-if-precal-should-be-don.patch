@@ -1,0 +1,26 @@
+From 5b823dd53f62a901960d151adcc92385ec5f908c Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Fri, 3 Mar 2023 22:05:29 +0100
+Subject: [PATCH 3/4] WIP: mt7915: use correct check if precal should be done
+
+Not 100% yet this is correct. Need to check the precal
+---
+ mt7915/eeprom.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mt7915/eeprom.c b/mt7915/eeprom.c
+index cdc5871c..193f3c9e 100644
+--- a/mt7915/eeprom.c
++++ b/mt7915/eeprom.c
+@@ -15,7 +15,7 @@ static int mt7915_eeprom_load_precal(struct mt7915_dev *dev)
+ 	if (!dev->flash_mode)
+ 		return 0;
+ 
+-	if (val != (MT_EE_WIFI_CAL_DPD | MT_EE_WIFI_CAL_GROUP))
++	if (!(val & (MT_EE_WIFI_CAL_DPD | MT_EE_WIFI_CAL_GROUP)))
+ 		return 0;
+ 
+ 	val = MT_EE_CAL_GROUP_SIZE + MT_EE_CAL_DPD_SIZE;
+-- 
+2.39.2
+
