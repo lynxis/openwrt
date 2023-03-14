@@ -156,7 +156,6 @@
 		spi-rx-buswidth = <4>;
 		mediatek,bmt-v2;
 		mediatek,bmt-table-size = <0x1000>;
-		mediatek,bmt-pool-size = <32>;
 
 		partitions {
 			compatible = "fixed-partitions";
