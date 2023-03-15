@@ -92,6 +92,87 @@ define Trusted-Firmware-A/mt7622-sdmmc-2ddr
   DDR3_FLYBY:=1
 endef
 
+define Trusted-Firmware-A/mt7981-nor-ddr4
+  NAME:=MediaTek MT7986 (SPI-NOR, DDR4)
+  BOOT_DEVICE:=nor
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr4
+endef
+
+define Trusted-Firmware-A/mt7981-emmc-ddr4
+  NAME:=MediaTek MT7986 (eMMC, DDR4)
+  BOOT_DEVICE:=emmc
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr4
+endef
+
+define Trusted-Firmware-A/mt7981-sdmmc-ddr4
+  NAME:=MediaTek MT7986 (SD card, DDR4)
+  BOOT_DEVICE:=sdmmc
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr4
+endef
+
+define Trusted-Firmware-A/mt7981-snand-ddr4
+  NAME:=MediaTek MT7981 (SPI-NAND via SNFI, DDR4)
+  BOOT_DEVICE:=snand
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr4
+endef
+
+define Trusted-Firmware-A/mt7981-spim-nand-ddr4
+  NAME:=MediaTek MT7981 (SPI-NAND via SPIM, DDR4)
+  BOOT_DEVICE:=spim-nand
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr4
+  NAND_TYPE:=spim:2k+64
+endef
+
+define Trusted-Firmware-A/mt7981-nor-ddr3
+  NAME:=MediaTek MT7981 (SPI-NOR, DDR3)
+  BOOT_DEVICE:=nor
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr3
+endef
+
+define Trusted-Firmware-A/mt7981-emmc-ddr3
+  NAME:=MediaTek MT7981 (eMMC, DDR3)
+  BOOT_DEVICE:=emmc
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr3
+endef
+
+define Trusted-Firmware-A/mt7981-sdmmc-ddr3
+  NAME:=MediaTek MT7981 (SD card, DDR3)
+  BOOT_DEVICE:=sdmmc
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr3
+endef
+
+define Trusted-Firmware-A/mt7981-snand-ddr3
+  NAME:=MediaTek MT7981 (SPI-NAND via SNFI, DDR3)
+  BOOT_DEVICE:=snand
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr3
+endef
+
+define Trusted-Firmware-A/mt7981-spim-nand-ddr3
+  NAME:=MediaTek MT7981 (SPI-NAND via SPIM, DDR3)
+  BOOT_DEVICE:=spim-nand
+  BUILD_SUBTARGET:=filogic
+  PLAT:=mt7981
+  DDR_TYPE:=ddr3
+endef
+
 define Trusted-Firmware-A/mt7986-nor-ddr4
   NAME:=MediaTek MT7986 (SPI-NOR, DDR4)
   BOOT_DEVICE:=nor
@@ -182,6 +263,16 @@ TFA_TARGETS:= \
 	mt7622-emmc-2ddr \
 	mt7622-sdmmc-1ddr \
 	mt7622-sdmmc-2ddr \
+	mt7981-emmc-ddr3 \
+	mt7981-nor-ddr3 \
+	mt7981-sdmmc-ddr3 \
+	mt7981-snand-ddr3 \
+	mt7981-spim-nand-ddr3 \
+	mt7981-emmc-ddr4 \
+	mt7981-nor-ddr4 \
+	mt7981-sdmmc-ddr4 \
+	mt7981-snand-ddr4 \
+	mt7981-spim-nand-ddr4 \
 	mt7986-emmc-ddr3 \
 	mt7986-nor-ddr3 \
 	mt7986-sdmmc-ddr3 \

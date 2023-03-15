@@ -176,6 +176,18 @@ define U-Boot/mt7629_rfb
   UBOOT_CONFIG:=mt7629_rfb
 endef
 
+define U-Boot/mt7981_glinet_gl-mt3000
+  NAME:=GL.inet mt3000
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=glinet_gl-mt3000
+  UBOOT_CONFIG:=mt7981_glinet_gl-mt3000
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=snand
+  BL2_SOC:=mt7981
+  BL2_DDRTYPE:=ddr4
+  DEPENDS:=+trusted-firmware-a-mt7981-snand-ddr4
+endef
+
 define U-Boot/mt7986_rfb
   NAME:=MT7986 Reference Board
   BUILD_SUBTARGET:=filogic
@@ -265,6 +277,7 @@ UBOOT_TARGETS := \
 	mt7628_rfb \
 	ravpower_rp-wd009 \
 	mt7629_rfb \
+	mt7981_glinet_gl-mt3000 \
 	mt7986_bananapi_bpi-r3-emmc \
 	mt7986_bananapi_bpi-r3-sdmmc \
 	mt7986_bananapi_bpi-r3-snand \

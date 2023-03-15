@@ -2,6 +2,9 @@ DTS_DIR := $(DTS_DIR)/mediatek
 
 KERNEL_LOADADDR := 0x44000000
 
+# MT_SOC: one of mt7981, mt7986
+DEVICE_VARS += DEVICE_SOC
+
 define Image/Prepare
 	# For UBI we want only one extra block
 	rm -f $(KDIR)/ubi_mark
@@ -9,11 +12,11 @@ define Image/Prepare
 endef
 
 define Build/bl2
-	cat $(STAGING_DIR_IMAGE)/mt7986-$1-bl2.img >> $@
+	cat $(STAGING_DIR_IMAGE)/$(DEVICE_SOC)-$1-bl2.img >> $@
 endef
 
 define Build/bl31-uboot
-	cat $(STAGING_DIR_IMAGE)/mt7986_$1-u-boot.fip >> $@
+	cat $(STAGING_DIR_IMAGE)/$(DEVICE_SOC)_$1-u-boot.fip >> $@
 endef
 
 define Build/mt7986-gpt
@@ -49,6 +52,7 @@ endef
 define Device/bananapi_bpi-r3
   DEVICE_VENDOR := Bananapi
   DEVICE_MODEL := BPi-R3
+  DEVICE_SOC := mt7986
   DEVICE_DTS := mt7986a-bananapi-bpi-r3
   DEVICE_DTS_CONFIG := config-mt7986a-bananapi-bpi-r3
   DEVICE_DTS_OVERLAY:= mt7986a-bananapi-bpi-r3-nor mt7986a-bananapi-bpi-r3-emmc-nor mt7986a-bananapi-bpi-r3-emmc-snand mt7986a-bananapi-bpi-r3-snand
@@ -95,6 +99,7 @@ TARGET_DEVICES += bananapi_bpi-r3
 define Device/glinet_gl-mt3000
   DEVICE_VENDOR := GL.iNet
   DEVICE_MODEL := GL-MT3000
+  DEVICE_SOC := mt7981
   DEVICE_DTS := mt7981-gl-mt3000
   DEVICE_DTS_DIR := ../dts
   SUPPORTED_DEVICES += glinet,mt3000-snand
@@ -107,6 +112,9 @@ define Device/glinet_gl-mt3000
   IMAGES += factory.bin
   IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-gl-metadata
+  ARTIFACTS := preloader.bin bl31-uboot.fip
+  ARTIFACT/preloader.bin := bl2 snand-ddr4
+  ARTIFACT/bl31-uboot.fip := bl31-uboot glinet_gl-mt3000
 endef
 TARGET_DEVICES += glinet_gl-mt3000
 
@@ -115,6 +123,7 @@ define Device/mediatek_mt7986a-rfb-nand
   DEVICE_MODEL := MT7986 rfba AP (NAND)
   DEVICE_DTS := mt7986a-rfb-spim-nand
   DEVICE_DTS_DIR := $(DTS_DIR)/
+  DEVICE_SOC := mt7986
   KERNEL_LOADADDR := 0x48000000
   SUPPORTED_DEVICES := mediatek,mt7986a-rfb-snand
   UBINIZE_OPTS := -E 5
@@ -138,6 +147,7 @@ define Device/mediatek_mt7986b-rfb
   DEVICE_MODEL := MTK7986 rfbb AP
   DEVICE_DTS := mt7986b-rfb
   DEVICE_DTS_DIR := $(DTS_DIR)/
+  DEVICE_SOC := mt7986
   KERNEL_LOADADDR := 0x48000000
   SUPPORTED_DEVICES := mediatek,mt7986b-rfb
   UBINIZE_OPTS := -E 5
@@ -157,6 +167,7 @@ define Device/xiaomi_redmi-router-ax6000-stock
   DEVICE_DTS := mt7986a-xiaomi-redmi-router-ax6000-stock
   DEVICE_DTS_DIR := ../dts
   DEVICE_PACKAGES := kmod-leds-ws2812b
+  DEVICE_SOC := mt7986
   KERNEL_LOADADDR := 0x48000000
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
@@ -174,6 +185,7 @@ define Device/xiaomi_redmi-router-ax6000-ubootmod
   DEVICE_MODEL := Redmi Router AX6000 (OpenWrt U-Boot layout)
   DEVICE_DTS := mt7986a-xiaomi-redmi-router-ax6000-ubootmod
   DEVICE_DTS_DIR := ../dts
+  DEVICE_SOC := mt7986
   DEVICE_PACKAGES := kmod-leds-ws2812b
   KERNEL_INITRAMFS_SUFFIX := -recovery.itb
   IMAGES := sysupgrade.itb
