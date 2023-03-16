@@ -113,7 +113,7 @@ define Device/glinet_gl-mt3000
   IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-gl-metadata
   ARTIFACTS := preloader.bin bl31-uboot.fip
-  ARTIFACT/preloader.bin := bl2 snand-ddr4
+  ARTIFACT/preloader.bin := bl2 spim-nand-ddr4
   ARTIFACT/bl31-uboot.fip := bl31-uboot glinet_gl-mt3000
 endef
 TARGET_DEVICES += glinet_gl-mt3000
