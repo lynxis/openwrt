@@ -185,7 +185,7 @@ define U-Boot/mt7981_glinet_gl-mt3000
   BL2_BOOTDEV:=snand
   BL2_SOC:=mt7981
   BL2_DDRTYPE:=ddr4
-  DEPENDS:=+trusted-firmware-a-mt7981-snand-ddr4
+  DEPENDS:=+trusted-firmware-a-mt7981-spim-nand-ddr4
 endef
 
 define U-Boot/mt7986_rfb
