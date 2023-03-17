@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/configs/mt7981_glinet_gl-mt3000_defconfig
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,88 @@
 +CONFIG_ARM=y
 +CONFIG_SYS_HAS_NONCACHED_MEMORY=y
 +CONFIG_POSITION_INDEPENDENT=y
@@ -16,9 +16,12 @@
 +CONFIG_DEBUG_UART=y
 +CONFIG_FIT=y
 +CONFIG_AUTOBOOT_KEYED=y
++CONFIG_AUTOBOOT_STOP_STR="gl"
++CONFIG_AUTOBOOT_KEYED_CTRLC=y
 +CONFIG_DEFAULT_FDT_FILE="mt7981-glinet_gl-mt3000"
 +CONFIG_LOGLEVEL=7
 +CONFIG_LOG=y
++CONFIG_HUSH_PARSER=y
 +CONFIG_SYS_CBSIZE=512
 +CONFIG_SYS_PBSIZE=1049
 +# CONFIG_BOOTM_NETBSD is not set
@@ -68,6 +71,7 @@
 +# CONFIG_MMC is not set
 +CONFIG_MTD=y
 +CONFIG_DM_MTD=y
++CONFIG_MTD_SPI_NAND=y
 +CONFIG_PHY_FIXED=y
 +CONFIG_MEDIATEK_ETH=y
 +CONFIG_PINCTRL=y
@@ -79,7 +83,6 @@
 +CONFIG_MTK_SERIAL=y
 +CONFIG_SPI=y
 +CONFIG_DM_SPI=y
-+CONFIG_SPI_MEM=y
 +CONFIG_MTK_SNFI_SPI=y
 +CONFIG_MTK_SPIM=y
 +CONFIG_TIMER=y
@@ -259,7 +262,7 @@
 +bootargs=console=ttyS0,115200n8 console_msg_format=syslog
 +bootcmd=if pstore check ; then run boot_recovery ; else run boot_ubi ; fi
 +bootconf=config-1
-+bootdelay=0
++bootdelay=3
 +bootfile=openwrt-mediatek-filogic-glinet_gl-mt3000-ubootmod-initramfs-recovery.itb
 +bootfile_bl2=openwrt-mediatek-filogic-glinet_gl-mt3000-ubootmod-preloader.bin
 +bootfile_fip=openwrt-mediatek-filogic-glinet_gl-mt3000-ubootmod-bl31-uboot.fip
