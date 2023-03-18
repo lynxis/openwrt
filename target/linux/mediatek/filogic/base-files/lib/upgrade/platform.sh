@@ -71,6 +71,10 @@ platform_do_upgrade() {
 		CI_KERNPART="fit"
 		nand_do_upgrade "$1"
 		;;
+	glinet,gl-mt3000)
+		CI_KERNPART="fit"
+		nand_do_upgrade "$1"
+        ;;
 	*)
 		nand_do_upgrade "$1"
 		;;
