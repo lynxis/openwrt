@@ -252,7 +252,7 @@
 +};
 --- /dev/null
 +++ b/glinet_gl-mt3000_env
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,54 @@
 +ethaddr_factory=mtd read factory 0x40080000 0x0 0x20000 && env readmem -b ethaddr 0x40080004 0x6 ; setenv ethaddr_factory
 +ipaddr=192.168.1.1
 +serverip=192.168.1.254
@@ -260,7 +260,6 @@
 +console=earlycon=uart8250,mmio32,0x11002000 console=ttyS0
 +bootargs=console=ttyS0,115200n8 console_msg_format=syslog
 +bootcmd=if pstore check ; then run boot_recovery ; else run boot_ubi ; fi
-+bootconf=config-1
 +bootdelay=3
 +bootfile=openwrt-mediatek-filogic-glinet_gl-mt3000-initramfs-recovery.itb
 +bootfile_bl2=openwrt-mediatek-filogic-glinet_gl-mt3000-preloader.bin
@@ -283,13 +282,13 @@
 +bootmenu_9=Reset all settings to factory defaults.=run reset_factory ; reset
 +boot_first=if button reset ; then run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
 +boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
-+boot_production=run ubi_read_production && bootm $loadaddr#$bootconf
-+boot_recovery=run ubi_read_recovery && bootm $loadaddr#$bootconf
++boot_production=run ubi_read_production && bootm $loadaddr
++boot_recovery=run ubi_read_recovery && bootm $loadaddr
 +boot_ubi=run boot_production ; run boot_recovery ; run boot_tftp_forever
 +boot_tftp_forever=while true ; do run boot_tftp_recovery ; sleep 1 ; done
-+boot_tftp_recovery=tftpboot $loadaddr $bootfile && env exists replacevol && iminfo $loadaddr && run ubi_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
-+boot_tftp_production=tftpboot $loadaddr $bootfile_upg && env exists replacevol && iminfo $loadaddr && run ubi_write_production ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
-+boot_tftp=tftpboot $loadaddr $bootfile && bootm $loadaddr#$bootconf
++boot_tftp_recovery=tftpboot $loadaddr $bootfile && env exists replacevol && iminfo $loadaddr && run ubi_write_recovery ; if env exists noboot ; then else bootm $loadaddr ; fi
++boot_tftp_production=tftpboot $loadaddr $bootfile_upg && env exists replacevol && iminfo $loadaddr && run ubi_write_production ; if env exists noboot ; then else bootm $loadaddr ; fi
++boot_tftp=tftpboot $loadaddr $bootfile && bootm $loadaddr
 +boot_tftp_write_fip=tftpboot $loadaddr $bootfile_fip && run mtd_write_fip && run reset_factory
 +boot_tftp_write_bl2=tftpboot $loadaddr $bootfile_bl2 && run mtd_write_bl2
 +part_fit=fit
