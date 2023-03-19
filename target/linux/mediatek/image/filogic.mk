@@ -102,7 +102,7 @@ define Device/glinet_gl-mt3000
   DEVICE_SOC := mt7981
   DEVICE_DTS := mt7981-gl-mt3000
   DEVICE_DTS_DIR := ../dts
-  SUPPORTED_DEVICES += glinet,mt3000-snand
+  SUPPORTED_DEVICES += glinet,gl-mt3000
   DEVICE_PACKAGES :=kmod-hwmon-pwmfan kmod-usb3
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
@@ -111,7 +111,7 @@ define Device/glinet_gl-mt3000
   KERNEL_IN_UBI := 1
   IMAGES += factory.bin
   IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
-  IMAGE/sysupgrade.bin := sysupgrade-tar | append-gl-metadata
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
   ARTIFACTS := preloader.bin bl31-uboot.fip
   ARTIFACT/preloader.bin := bl2 spim-nand-ddr4
   ARTIFACT/bl31-uboot.fip := bl31-uboot glinet_gl-mt3000
