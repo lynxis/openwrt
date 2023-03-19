@@ -104,11 +104,13 @@ define Device/glinet_gl-mt3000
   DEVICE_DTS_DIR := ../dts
   SUPPORTED_DEVICES += glinet,gl-mt3000
   DEVICE_PACKAGES :=kmod-hwmon-pwmfan kmod-usb3
+  KERNEL_INITRAMFS_SUFFIX := -recovery.itb
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
   PAGESIZE := 2048
   IMAGE_SIZE := 65536k
   KERNEL_IN_UBI := 1
+  UBOOTENV_IN_UBI := 1
   IMAGES += factory.bin
   IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
