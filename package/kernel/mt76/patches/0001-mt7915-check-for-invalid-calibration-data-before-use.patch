@@ -1,0 +1,41 @@
+From 40d3432ae32f18d2f7a0d7d7ca6f989d33cf8feb Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Fri, 3 Mar 2023 21:27:24 +0100
+Subject: [PATCH 1/3] mt7915: check for invalid calibration data before use
+
+Signed-off-by: Alexander Couzens <lynxis@fe80.eu>
+---
+ mt7915/mcu.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/mt7915/mcu.c b/mt7915/mcu.c
+index d08907f5fa34..a66c012a70b2 100644
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -2928,6 +2928,11 @@ int mt7915_mcu_apply_group_cal(struct mt7915_dev *dev)
+ 	if (1 || !(eep[MT_EE_DO_PRE_CAL] & MT_EE_WIFI_CAL_GROUP))
+ 		return 0;
+ 
++	if (!cal) {
++		dev_err(dev->mt76.dev, "No calibration data. Skipping PreCal");
++		return 0;
++	}
++
+ 	/*
+ 	 * Items: Rx DCOC, RSSI DCOC, Tx TSSI DCOC, Tx LPFG
+ 	 * Tx FDIQ, Tx DCIQ, Rx FDIQ, Rx FIIQ, ADCDCOC
+@@ -3012,6 +3017,11 @@ int mt7915_mcu_apply_tx_dpd(struct mt7915_phy *phy)
+ 	if (1 || !(eep[MT_EE_DO_PRE_CAL] & MT_EE_WIFI_CAL_DPD))
+ 		return 0;
+ 
++	if (!cal) {
++		dev_err(dev->mt76.dev, "No calibration data. Skipping PreCal");
++		return 0;
++	}
++
+ 	idx = mt7915_dpd_freq_idx(center_freq, chandef->width);
+ 	if (idx < 0)
+ 		return -EINVAL;
+-- 
+2.40.0
+

@@ -1,0 +1,30 @@
+From 03741478f6a54d54e470f3ca95f9a41d12a56065 Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Fri, 3 Mar 2023 22:05:29 +0100
+Subject: [PATCH 2/3] mt7915: allow to use partial calibration
+
+The mt7981 might only valid data for MT_EE_WIFI_CAL_GROUP
+but not for MT_EE_WIFI_CAL_DPD or vice versa.
+
+TODO: verify this.
+Signed-off-by: Alexander Couzens <lynxis@fe80.eu>
+---
+ mt7915/eeprom.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mt7915/eeprom.c b/mt7915/eeprom.c
+index a79628933948..57d5b7750a3f 100644
+--- a/mt7915/eeprom.c
++++ b/mt7915/eeprom.c
+@@ -15,7 +15,7 @@ static int mt7915_eeprom_load_precal(struct mt7915_dev *dev)
+ 	if (!dev->flash_mode)
+ 		return 0;
+ 
+-	if (val != (MT_EE_WIFI_CAL_DPD | MT_EE_WIFI_CAL_GROUP))
++	if (!(val & (MT_EE_WIFI_CAL_DPD | MT_EE_WIFI_CAL_GROUP)))
+ 		return 0;
+ 
+ 	val = MT_EE_CAL_GROUP_SIZE + MT_EE_CAL_DPD_SIZE;
+-- 
+2.40.0
+
