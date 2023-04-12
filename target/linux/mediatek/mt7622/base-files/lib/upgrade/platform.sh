@@ -52,6 +52,23 @@ platform_do_upgrade() {
 		fi
 		default_do_upgrade "$1"
 		;;
+	samknows,whitebox-v9plus)
+		local ubootab=$(cat /sys/firmware/devicetree/base/chosen/u-boot,abboot 2>/dev/null)
+		CI_ROOT_DATA_PART_MAX=16777216
+		case "$ubootab" in
+		a)
+			CI_KERNPART=b_fit
+			CI_ROOT_DATA_PART=b_rootfs_data
+			fw_setenv ab_try b
+			;;
+		b | *)
+			CI_KERNPART=a_fit
+			CI_ROOT_DATA_PART=a_rootfs_data
+			fw_setenv ab_try a
+			;;
+		esac
+		nand_do_upgrade "$1"
+		;;
 	*)
 		default_do_upgrade "$1"
 		;;

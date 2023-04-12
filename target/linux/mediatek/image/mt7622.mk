@@ -267,6 +267,30 @@ define Device/reyee_ax3200-e5
 endef
 TARGET_DEVICES += reyee_ax3200-e5
 
+define Device/samknows_whitebox-v9plus
+  DEVICE_VENDOR := SamKnows
+  DEVICE_MODEL := Whitebox 9+
+  DEVICE_DTS := mt7622-samknows-whitebox-v9plus
+  DEVICE_DTS_DIR := ../dts
+  DEVICE_PACKAGES := kmod-mt7915e
+  SUPPORTED_DEVICES += samknows,whitebox-v9plus
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  UBOOTENV_IN_UBI := 1
+  KERNEL_IN_UBI := 1
+  KERNEL := kernel-bin | gzip
+  KERNEL_INITRAMFS := kernel-bin | lzma | \
+	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | pad-to 128k
+  KERNEL_INITRAMFS_SUFFIX := -recovery.itb
+  IMAGES := sysupgrade.itb
+  IMAGE/sysupgrade.itb := append-kernel | fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-static-with-rootfs | append-metadata
+  ARTIFACTS := preloader.bin bl31-uboot.fip
+  ARTIFACT/preloader.bin := bl2 snand-1ddr
+  ARTIFACT/bl31-uboot.fip := bl31-uboot samknows_whitebox-v9plus
+endef
+TARGET_DEVICES += samknows_whitebox-v9plus
+
 define Device/totolink_a8000ru
   DEVICE_VENDOR := TOTOLINK
   DEVICE_MODEL := A8000RU

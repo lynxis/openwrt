@@ -7,5 +7,13 @@ boot() {
 	linksys,e8450)
 		mtd erase senv || true
 		;;
+    samknows,whitebox-v9plus)
+        local ubootab="$(cat /sys/firmware/devicetree/base/chosen/u-boot,abboot 2>/dev/null)"
+        case "$ubootab" in
+        a | b)
+            fw_setenv ab_next "$ubootab"
+            ;;
+        esac
+        ;;
 	esac
 }

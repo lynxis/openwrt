@@ -12,7 +12,8 @@ touch /etc/config/ubootenv
 board=$(board_name)
 
 case "$board" in
-linksys,e8450-ubi)
+linksys,e8450-ubi |\
+samknows,whitebox-v9plus)
 	ubootenv_add_uci_config "/dev/ubi0_0" "0x0" "0x1f000" "0x1f000" "1"
 	ubootenv_add_uci_config "/dev/ubi0_1" "0x0" "0x1f000" "0x1f000" "1"
 	;;
