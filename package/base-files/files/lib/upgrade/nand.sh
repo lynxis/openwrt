@@ -13,6 +13,7 @@ CI_UBIPART="${CI_UBIPART:-ubi}"
 
 # 'rootfs' UBI volume on NAND contains the rootfs
 CI_ROOTPART="${CI_ROOTPART:-rootfs}"
+CI_ROOTDATAPART="${CI_ROOTDATAPART:-rootfs_data}"
 
 ubi_mknod() {
 	local dir="$1"
@@ -78,7 +79,7 @@ identify_if_gzip() {
 
 nand_restore_config() {
 	local ubidev=$( nand_find_ubi "${CI_ROOT_UBIPART:-$CI_UBIPART}" )
-	local ubivol="$( nand_find_volume $ubidev rootfs_data )"
+	local ubivol="$( nand_find_volume $ubidev "$CI_ROOT_DATA_PART" )"
 	if [ ! "$ubivol" ]; then
 		ubivol="$( nand_find_volume $ubidev "$CI_ROOTPART" )"
 		if [ ! "$ubivol" ]; then
@@ -204,7 +205,7 @@ nand_upgrade_prepare_ubi() {
 
 	local kern_ubivol="$( nand_find_volume $kern_ubidev "$CI_KERNPART" )"
 	local root_ubivol="$( nand_find_volume $root_ubidev "$CI_ROOTPART" )"
-	local data_ubivol="$( nand_find_volume $root_ubidev rootfs_data )"
+	local data_ubivol="$( nand_find_volume $root_ubidev "$CI_ROOT_DATA_PART" )"
 	[ "$root_ubivol" = "$kern_ubivol" ] && root_ubivol=
 
 	# remove ubiblocks
@@ -215,7 +216,7 @@ nand_upgrade_prepare_ubi() {
 	# kill volumes
 	[ "$kern_ubivol" ] && ubirmvol /dev/$kern_ubidev -N "$CI_KERNPART" || :
 	[ "$root_ubivol" ] && ubirmvol /dev/$root_ubidev -N "$CI_ROOTPART" || :
-	[ "$data_ubivol" ] && ubirmvol /dev/$root_ubidev -N rootfs_data || :
+	[ "$data_ubivol" ] && ubirmvol /dev/$root_ubidev -N "$CI_ROOT_DATA_PART" || :
 
 	# create kernel vol
 	if [ -n "$kernel_length" ]; then
@@ -245,9 +246,9 @@ nand_upgrade_prepare_ubi() {
 		if [ -n "$rootfs_data_max" ]; then
 			rootfs_data_size_param="-s $rootfs_data_max"
 		fi
-		if ! ubimkvol /dev/$root_ubidev -N rootfs_data $rootfs_data_size_param; then
-			if ! ubimkvol /dev/$root_ubidev -N rootfs_data -m; then
-				echo "cannot initialize rootfs_data volume"
+		if ! ubimkvol /dev/$root_ubidev -N "$CI_ROOT_DATA_PART" $rootfs_data_size_param; then
+			if ! ubimkvol /dev/$root_ubidev -N "$CI_ROOT_DATA_PART" -m; then
+				echo "cannot initialize "$CI_ROOT_DATA_PART" volume"
 				return 1
 			fi
 		fi
