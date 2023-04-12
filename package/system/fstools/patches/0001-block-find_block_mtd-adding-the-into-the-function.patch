@@ -1,0 +1,56 @@
+From e2148ae5d4f0a8c1f31de3a66929776013b1998a Mon Sep 17 00:00:00 2001
+From: Alexander Couzens <lynxis@fe80.eu>
+Date: Wed, 28 Dec 2022 21:35:57 +0100
+Subject: [PATCH 1/4] block: find_block_mtd: adding the " into the function
+
+Allow to pass normal part name to the find_block_mtd.
+In prepration of a dynamic rootfs_data name.
+---
+ block.c | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/block.c b/block.c
+index 4b45200ad381..5e7ddf729da4 100644
+--- a/block.c
++++ b/block.c
+@@ -1320,12 +1320,18 @@ static int find_block_mtd(char *name, char *part, int plen)
+ 	FILE *fp = fopen("/proc/mtd", "r");
+ 	static char line[256];
+ 	char *index = NULL;
++	char tmp[128];
++
++	if (strlen(name) >= sizeof(tmp))
++		return -ENOMEM;
++
++	snprintf(tmp, sizeof(tmp), "\"%s\"", name);
+ 
+ 	if(!fp)
+ 		return -1;
+ 
+ 	while (!index && fgets(line, sizeof(line), fp)) {
+-		if (strstr(line, name)) {
++		if (strstr(line, tmp)) {
+ 			char *eol = strstr(line, ":");
+ 
+ 			if (!eol)
+@@ -1470,7 +1476,7 @@ static int check_extroot(char *path)
+ 	FILE *fp;
+ 	int err;
+ 
+-	err = find_block_mtd("\"rootfs\"", devpath, sizeof(devpath));
++	err = find_block_mtd("rootfs", devpath, sizeof(devpath));
+ #ifdef UBIFS_EXTROOT
+ 	if (err) {
+ 		libubi_t libubi;
+@@ -1652,7 +1658,7 @@ static int main_extroot(int argc, char **argv)
+ 	 */
+ 
+ 	/* Start with looking for MTD partition */
+-	find_block_mtd("\"rootfs_data\"", blkdev_path, sizeof(blkdev_path));
++	find_block_mtd("rootfs_data", blkdev_path, sizeof(blkdev_path));
+ 	if (blkdev_path[0]) {
+ 		pr = find_block_info(NULL, NULL, blkdev_path);
+ 		if (pr && !strcmp(pr->type, "jffs2")) {
+-- 
+2.39.0
+
