@@ -1,0 +1,14 @@
+. /lib/functions.sh
+
+
+case "$(board_name)" in
+samknows,whitebox-v9plus)
+	# only for board validation
+	uci set network.factory=interface
+	uci set network.factory.device=br-wan
+	uci set network.factory.proto=static
+	uci set network.factory.ipaddr=10.98.11.62/24
+	uci commit network
+	reload_config
+	;;
+esac
