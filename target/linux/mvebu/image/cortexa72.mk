@@ -63,6 +63,19 @@ define Device/marvell_clearfog-gt-8k
 endef
 TARGET_DEVICES += marvell_clearfog-gt-8k
 
+define Device/solidrun_clearfog-cn9130-base
+  $(call Device/Default-arm64)
+  DEVICE_VENDOR := SolidRun
+  DEVICE_MODEL := Clearfog cn9130 base
+  BOOT_SCRIPT := clearfog_9130
+  SOC := cn9131
+  DEVICE_DTS := cn9130-cf-base
+  KERNEL_NAME := Image
+  # Remove BROKEN when updating to 6.1
+  BROKEN := 1
+endef
+TARGET_DEVICES += solidrun_clearfog-cn9130-base
+
 define Device/iei_puzzle-m901
   $(call Device/Default-arm64)
   DEVICE_VENDOR := iEi
