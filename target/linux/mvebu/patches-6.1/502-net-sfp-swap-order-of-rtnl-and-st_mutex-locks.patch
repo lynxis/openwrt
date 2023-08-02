@@ -1,0 +1,44 @@
+From a9fe964e7aaeb3fc06a91c21269d0ac8b5afcea8 Mon Sep 17 00:00:00 2001
+From: "Russell King (Oracle)" <rmk+kernel@armlinux.org.uk>
+Date: Wed, 17 May 2023 11:37:57 +0100
+Subject: [PATCH] net: sfp: swap order of rtnl and st_mutex locks
+
+Swap the order of the rtnl and st_mutex locks - st_mutex is now nested
+beneath rtnl lock instead of rtnl being beneath st_mutex. This will
+allow us to hold st_mutex only while manipulating the module's hardware
+or software control state.
+
+Reviewed-by: Simon Horman <simon.horman@corigine.com>
+Signed-off-by: Russell King (Oracle) <rmk+kernel@armlinux.org.uk>
+Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+---
+ drivers/net/phy/sfp.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/phy/sfp.c b/drivers/net/phy/sfp.c
+index 3fc703e4dd21..ffb6c37dac96 100644
+--- a/drivers/net/phy/sfp.c
++++ b/drivers/net/phy/sfp.c
+@@ -2600,8 +2600,8 @@ static void sfp_check_state(struct sfp *sfp)
+ {
+ 	unsigned int state, i, changed;
+ 
+-	mutex_lock(&sfp->st_mutex);
+ 	rtnl_lock();
++	mutex_lock(&sfp->st_mutex);
+ 	state = sfp_get_state(sfp);
+ 	changed = state ^ sfp->state;
+ 	if (sfp->tx_fault_ignore)
+@@ -2628,8 +2628,8 @@ static void sfp_check_state(struct sfp *sfp)
+ 	if (changed & SFP_F_LOS)
+ 		sfp_sm_event(sfp, state & SFP_F_LOS ?
+ 				SFP_E_LOS_HIGH : SFP_E_LOS_LOW);
+-	rtnl_unlock();
+ 	mutex_unlock(&sfp->st_mutex);
++	rtnl_unlock();
+ }
+ 
+ static irqreturn_t sfp_irq(int irq, void *data)
+-- 
+2.41.0
+

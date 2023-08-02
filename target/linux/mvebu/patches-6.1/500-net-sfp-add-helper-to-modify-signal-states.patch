@@ -1,0 +1,57 @@
+From 418c1214741cf3ac5e420382a85c4f8a40586024 Mon Sep 17 00:00:00 2001
+From: "Russell King (Oracle)" <rmk+kernel@armlinux.org.uk>
+Date: Wed, 17 May 2023 11:37:47 +0100
+Subject: [PATCH] net: sfp: add helper to modify signal states
+
+There are a couple of locations in the code where we modify
+sfp->state, and then call sfp_set_state(, sfp->state) to update
+the outputs/soft state to control the module. Provide a helper
+which takes a mask and new state so that this is encapsulated in
+one location.
+
+Reviewed-by: Simon Horman <simon.horman@corigine.com>
+Signed-off-by: Russell King (Oracle) <rmk+kernel@armlinux.org.uk>
+Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+---
+ drivers/net/phy/sfp.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/phy/sfp.c b/drivers/net/phy/sfp.c
+index 89636dc71e48..c97a87393fdb 100644
+--- a/drivers/net/phy/sfp.c
++++ b/drivers/net/phy/sfp.c
+@@ -734,6 +734,12 @@ static void sfp_set_state(struct sfp *sfp, unsigned int state)
+ 		sfp_soft_set_state(sfp, state);
+ }
+ 
++static void sfp_mod_state(struct sfp *sfp, unsigned int mask, unsigned int set)
++{
++	sfp->state = (sfp->state & ~mask) | set;
++	sfp_set_state(sfp, sfp->state);
++}
++
+ static unsigned int sfp_check(void *buf, size_t len)
+ {
+ 	u8 *p, check;
+@@ -1537,16 +1543,14 @@ static void sfp_module_tx_disable(struct sfp *sfp)
+ {
+ 	dev_dbg(sfp->dev, "tx disable %u -> %u\n",
+ 		sfp->state & SFP_F_TX_DISABLE ? 1 : 0, 1);
+-	sfp->state |= SFP_F_TX_DISABLE;
+-	sfp_set_state(sfp, sfp->state);
++	sfp_mod_state(sfp, SFP_F_TX_DISABLE, SFP_F_TX_DISABLE);
+ }
+ 
+ static void sfp_module_tx_enable(struct sfp *sfp)
+ {
+ 	dev_dbg(sfp->dev, "tx disable %u -> %u\n",
+ 		sfp->state & SFP_F_TX_DISABLE ? 1 : 0, 0);
+-	sfp->state &= ~SFP_F_TX_DISABLE;
+-	sfp_set_state(sfp, sfp->state);
++	sfp_mod_state(sfp, SFP_F_TX_DISABLE, 0);
+ }
+ 
+ #if IS_ENABLED(CONFIG_DEBUG_FS)
+-- 
+2.41.0
+

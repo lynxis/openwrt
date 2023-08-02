@@ -1,0 +1,74 @@
+From 97a492050aa5e15507fd7b8774e7adaf8d6e4bb5 Mon Sep 17 00:00:00 2001
+From: "Russell King (Oracle)" <rmk+kernel@armlinux.org.uk>
+Date: Wed, 17 May 2023 11:38:02 +0100
+Subject: [PATCH] net: sfp: move sm_mutex into sfp_check_state()
+
+Provide an unlocked version of sfp_sm_event() which can be used by
+sfp_check_state() to avoid having to keep re-taking the lock if
+several signals have changed state.
+
+Reviewed-by: Simon Horman <simon.horman@corigine.com>
+Signed-off-by: Russell King (Oracle) <rmk+kernel@armlinux.org.uk>
+Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+---
+ drivers/net/phy/sfp.c | 23 ++++++++++++++---------
+ 1 file changed, 14 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/net/phy/sfp.c b/drivers/net/phy/sfp.c
+index ffb6c37dac96..e5cd36e3a421 100644
+--- a/drivers/net/phy/sfp.c
++++ b/drivers/net/phy/sfp.c
+@@ -2456,10 +2456,8 @@ static void sfp_sm_main(struct sfp *sfp, unsigned int event)
+ 	}
+ }
+ 
+-static void sfp_sm_event(struct sfp *sfp, unsigned int event)
++static void __sfp_sm_event(struct sfp *sfp, unsigned int event)
+ {
+-	mutex_lock(&sfp->sm_mutex);
+-
+ 	dev_dbg(sfp->dev, "SM: enter %s:%s:%s event %s\n",
+ 		mod_state_to_str(sfp->sm_mod_state),
+ 		dev_state_to_str(sfp->sm_dev_state),
+@@ -2474,7 +2472,12 @@ static void sfp_sm_event(struct sfp *sfp, unsigned int event)
+ 		mod_state_to_str(sfp->sm_mod_state),
+ 		dev_state_to_str(sfp->sm_dev_state),
+ 		sm_state_to_str(sfp->sm_state));
++}
+ 
++static void sfp_sm_event(struct sfp *sfp, unsigned int event)
++{
++	mutex_lock(&sfp->sm_mutex);
++	__sfp_sm_event(sfp, event);
+ 	mutex_unlock(&sfp->sm_mutex);
+ }
+ 
+@@ -2617,17 +2620,19 @@ static void sfp_check_state(struct sfp *sfp)
+ 	state |= sfp->state & (SFP_F_TX_DISABLE | SFP_F_RATE_SELECT);
+ 	sfp->state = state;
+ 
++	mutex_lock(&sfp->sm_mutex);
+ 	if (changed & SFP_F_PRESENT)
+-		sfp_sm_event(sfp, state & SFP_F_PRESENT ?
+-				SFP_E_INSERT : SFP_E_REMOVE);
++		__sfp_sm_event(sfp, state & SFP_F_PRESENT ?
++				    SFP_E_INSERT : SFP_E_REMOVE);
+ 
+ 	if (changed & SFP_F_TX_FAULT)
+-		sfp_sm_event(sfp, state & SFP_F_TX_FAULT ?
+-				SFP_E_TX_FAULT : SFP_E_TX_CLEAR);
++		__sfp_sm_event(sfp, state & SFP_F_TX_FAULT ?
++				    SFP_E_TX_FAULT : SFP_E_TX_CLEAR);
+ 
+ 	if (changed & SFP_F_LOS)
+-		sfp_sm_event(sfp, state & SFP_F_LOS ?
+-				SFP_E_LOS_HIGH : SFP_E_LOS_LOW);
++		__sfp_sm_event(sfp, state & SFP_F_LOS ?
++				    SFP_E_LOS_HIGH : SFP_E_LOS_LOW);
++	mutex_unlock(&sfp->sm_mutex);
+ 	mutex_unlock(&sfp->st_mutex);
+ 	rtnl_unlock();
+ }
+-- 
+2.41.0
+
