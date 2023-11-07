@@ -1,0 +1,130 @@
+Index: linux-5.15.137/arch/arm/vdso/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/arm/vdso/Makefile
++++ linux-5.15.137/arch/arm/vdso/Makefile
+@@ -19,7 +19,7 @@ ccflags-y += -DDISABLE_BRANCH_PROFILING
+ ldflags-$(CONFIG_CPU_ENDIAN_BE8) := --be8
+ ldflags-y := -Bsymbolic --no-undefined -soname=linux-vdso.so.1 \
+ 	    -z max-page-size=4096 -nostdlib -shared $(ldflags-y) \
+-	    --hash-style=sysv --build-id=sha1 \
++	    --hash-style=sysv --build-id=none \
+ 	    -T
+ 
+ obj-$(CONFIG_VDSO) += vdso.o
+Index: linux-5.15.137/arch/arm64/kernel/vdso/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/arm64/kernel/vdso/Makefile
++++ linux-5.15.137/arch/arm64/kernel/vdso/Makefile
+@@ -24,7 +24,7 @@ btildflags-$(CONFIG_ARM64_BTI_KERNEL) +=
+ # routines, as x86 does (see 6f121e548f83 ("x86, vdso: Reimplement vdso.so
+ # preparation in build-time C")).
+ ldflags-y := -shared -nostdlib -soname=linux-vdso.so.1 --hash-style=sysv	\
+-	     -Bsymbolic --build-id=sha1 -n $(btildflags-y) -T
++	     -Bsymbolic --build-id=none -n $(btildflags-y) -T
+ 
+ ccflags-y := -fno-common -fno-builtin -fno-stack-protector -ffixed-x18
+ ccflags-y += -DDISABLE_BRANCH_PROFILING -DBUILD_VDSO
+Index: linux-5.15.137/arch/arm64/kernel/vdso32/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/arm64/kernel/vdso32/Makefile
++++ linux-5.15.137/arch/arm64/kernel/vdso32/Makefile
+@@ -117,7 +117,7 @@ VDSO_AFLAGS += $(dmbinstr)
+ # From arm vDSO Makefile
+ VDSO_LDFLAGS += -Bsymbolic --no-undefined -soname=linux-vdso.so.1
+ VDSO_LDFLAGS += -z max-page-size=4096 -z common-page-size=4096
+-VDSO_LDFLAGS += -nostdlib -shared --hash-style=sysv --build-id=sha1
++VDSO_LDFLAGS += -nostdlib -shared --hash-style=sysv --build-id=none
+ 
+ 
+ # Borrow vdsomunge.c from the arm vDSO
+Index: linux-5.15.137/arch/csky/kernel/vdso/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/csky/kernel/vdso/Makefile
++++ linux-5.15.137/arch/csky/kernel/vdso/Makefile
+@@ -36,7 +36,7 @@ SYSCFLAGS_vdso.so.dbg = $(c_flags)
+ $(obj)/vdso.so.dbg: $(src)/vdso.lds $(obj-vdso) FORCE
+ 	$(call if_changed,vdsold)
+ SYSCFLAGS_vdso.so.dbg = -shared -s -Wl,-soname=linux-vdso.so.1 \
+-	-Wl,--build-id=sha1 -Wl,--hash-style=both
++	-Wl,--build-id=none -Wl,--hash-style=both
+ 
+ $(obj)/vdso-syms.S: $(obj)/vdso.so FORCE
+ 	$(call if_changed,so2s)
+Index: linux-5.15.137/arch/mips/vdso/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/mips/vdso/Makefile
++++ linux-5.15.137/arch/mips/vdso/Makefile
+@@ -58,7 +58,7 @@ endif
+ # VDSO linker flags.
+ ldflags-y := -Bsymbolic --no-undefined -soname=linux-vdso.so.1 \
+ 	$(filter -E%,$(KBUILD_CFLAGS)) -nostdlib -shared \
+-	-G 0 --eh-frame-hdr --hash-style=sysv --build-id=sha1 -T
++	-G 0 --eh-frame-hdr --hash-style=sysv --build-id=none -T
+ 
+ CFLAGS_REMOVE_vdso.o = $(CC_FLAGS_FTRACE)
+ 
+Index: linux-5.15.137/arch/riscv/kernel/vdso/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/riscv/kernel/vdso/Makefile
++++ linux-5.15.137/arch/riscv/kernel/vdso/Makefile
+@@ -49,7 +49,7 @@ $(obj)/vdso.o: $(obj)/vdso.so
+ $(obj)/vdso.so.dbg: $(obj)/vdso.lds $(obj-vdso) FORCE
+ 	$(call if_changed,vdsold)
+ LDFLAGS_vdso.so.dbg = -shared -S -soname=linux-vdso.so.1 \
+-	--build-id=sha1 --hash-style=both --eh-frame-hdr
++	--build-id=none --hash-style=both --eh-frame-hdr
+ 
+ # strip rule for the .so file
+ $(obj)/%.so: OBJCOPYFLAGS := -S
+Index: linux-5.15.137/arch/s390/kernel/vdso32/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/s390/kernel/vdso32/Makefile
++++ linux-5.15.137/arch/s390/kernel/vdso32/Makefile
+@@ -23,7 +23,7 @@ KBUILD_CFLAGS_32 := $(filter-out -m64,$(
+ KBUILD_CFLAGS_32 += -m31 -fPIC -shared -fno-common -fno-builtin
+ 
+ LDFLAGS_vdso32.so.dbg += -fPIC -shared -soname=linux-vdso32.so.1 \
+-	--hash-style=both --build-id=sha1 -melf_s390 -T
++	--hash-style=both --build-id=none -melf_s390 -T
+ 
+ $(targets:%=$(obj)/%.dbg): KBUILD_CFLAGS = $(KBUILD_CFLAGS_32)
+ $(targets:%=$(obj)/%.dbg): KBUILD_AFLAGS = $(KBUILD_AFLAGS_32)
+Index: linux-5.15.137/arch/s390/kernel/vdso64/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/s390/kernel/vdso64/Makefile
++++ linux-5.15.137/arch/s390/kernel/vdso64/Makefile
+@@ -27,7 +27,7 @@ KBUILD_AFLAGS_64 += -m64 -s
+ KBUILD_CFLAGS_64 := $(filter-out -m64,$(KBUILD_CFLAGS))
+ KBUILD_CFLAGS_64 += -m64 -fPIC -fno-common -fno-builtin
+ ldflags-y := -fPIC -shared -soname=linux-vdso64.so.1 \
+-	     --hash-style=both --build-id=sha1 -T
++	     --hash-style=both --build-id=none -T
+ 
+ $(targets:%=$(obj)/%.dbg): KBUILD_CFLAGS = $(KBUILD_CFLAGS_64)
+ $(targets:%=$(obj)/%.dbg): KBUILD_AFLAGS = $(KBUILD_AFLAGS_64)
+Index: linux-5.15.137/arch/sparc/vdso/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/sparc/vdso/Makefile
++++ linux-5.15.137/arch/sparc/vdso/Makefile
+@@ -113,7 +113,7 @@ quiet_cmd_vdso = VDSO    $@
+ 		       -T $(filter %.lds,$^) $(filter %.o,$^) && \
+ 		sh $(srctree)/$(src)/checkundef.sh '$(OBJDUMP)' '$@'
+ 
+-VDSO_LDFLAGS = -shared --hash-style=both --build-id=sha1 -Bsymbolic
++VDSO_LDFLAGS = -shared --hash-style=both --build-id=none -Bsymbolic
+ GCOV_PROFILE := n
+ 
+ #
+Index: linux-5.15.137/arch/x86/entry/vdso/Makefile
+===================================================================
+--- linux-5.15.137.orig/arch/x86/entry/vdso/Makefile
++++ linux-5.15.137/arch/x86/entry/vdso/Makefile
+@@ -178,7 +178,7 @@ quiet_cmd_vdso = VDSO    $@
+ 		       -T $(filter %.lds,$^) $(filter %.o,$^) && \
+ 		 sh $(srctree)/$(src)/checkundef.sh '$(NM)' '$@'
+ 
+-VDSO_LDFLAGS = -shared --hash-style=both --build-id=sha1 \
++VDSO_LDFLAGS = -shared --hash-style=both --build-id=none \
+ 	$(call ld-option, --eh-frame-hdr) -Bsymbolic -z noexecstack
+ GCOV_PROFILE := n
+ 
