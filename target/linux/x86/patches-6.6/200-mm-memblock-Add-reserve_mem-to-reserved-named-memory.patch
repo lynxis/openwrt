@@ -1,0 +1,225 @@
+From caafdf1f34edf7e51107b9c06da4ec29154409f1 Mon Sep 17 00:00:00 2001
+From: "Steven Rostedt (Google)" <rostedt@goodmis.org>
+Date: Thu, 13 Jun 2024 11:55:07 -0400
+Subject: [PATCH] mm/memblock: Add "reserve_mem" to reserved named memory at
+ boot up
+
+In order to allow for requesting a memory region that can be used for
+things like pstore on multiple machines where the memory layout is not the
+same, add a new option to the kernel command line called "reserve_mem".
+
+The format is:  reserve_mem=nn:align:name
+
+Where it will find nn amount of memory at the given alignment of align.
+The name field is to allow another subsystem to retrieve where the memory
+was found. For example:
+
+  reserve_mem=12M:4096:oops ramoops.mem_name=oops
+
+Where ramoops.mem_name will tell ramoops that memory was reserved for it
+via the reserve_mem option and it can find it by calling:
+
+  if (reserve_mem_find_by_name("oops", &start, &size)) {
+	// start holds the start address and size holds the size given
+
+This is typically used for systems that do not wipe the RAM, and this
+command line will try to reserve the same physical memory on soft reboots.
+Note, it is not guaranteed to be the same location. For example, if KASLR
+places the kernel at the location of where the RAM reservation was from a
+previous boot, the new reservation will be at a different location.  Any
+subsystem using this feature must add a way to verify that the contents of
+the physical memory is from a previous boot, as there may be cases where
+the memory will not be located at the same location.
+
+Not all systems may work either. There could be bit flips if the reboot
+goes through the BIOS. Using kexec to reboot the machine is likely to
+have better results in such cases.
+
+Link: https://lore.kernel.org/all/ZjJVnZUX3NZiGW6q@kernel.org/
+
+Suggested-by: Mike Rapoport <rppt@kernel.org>
+Tested-by: Guilherme G. Piccoli <gpiccoli@igalia.com>
+Signed-off-by: Steven Rostedt (Google) <rostedt@goodmis.org>
+Link: https://lore.kernel.org/r/20240613155527.437020271@goodmis.org
+Signed-off-by: Mike Rapoport (IBM) <rppt@kernel.org>
+---
+ .../admin-guide/kernel-parameters.txt         |  22 ++++
+ include/linux/mm.h                            |   2 +
+ mm/memblock.c                                 | 117 ++++++++++++++++++
+ 3 files changed, 141 insertions(+)
+
+diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+index fff3ca50c6c2..c74a3f79778e 100644
+--- a/Documentation/admin-guide/kernel-parameters.txt
++++ b/Documentation/admin-guide/kernel-parameters.txt
+@@ -5520,6 +5520,28 @@
+ 			them.  If <base> is less than 0x10000, the region
+ 			is assumed to be I/O ports; otherwise it is memory.
+ 
++	reserve_mem=	[RAM]
++			Format: nn[KNG]:<align>:<label>
++			Reserve physical memory and label it with a name that
++			other subsystems can use to access it. This is typically
++			used for systems that do not wipe the RAM, and this command
++			line will try to reserve the same physical memory on
++			soft reboots. Note, it is not guaranteed to be the same
++			location. For example, if anything about the system changes
++			or if booting a different kernel. It can also fail if KASLR
++			places the kernel at the location of where the RAM reservation
++			was from a previous boot, the new reservation will be at a
++			different location.
++			Any subsystem using this feature must add a way to verify
++			that the contents of the physical memory is from a previous
++			boot, as there may be cases where the memory will not be
++			located at the same location.
++
++			The format is size:align:label for example, to request
++			12 megabytes of 4096 alignment for ramoops:
++
++			reserve_mem=12M:4096:oops ramoops.mem_name=oops
++
+ 	reservetop=	[X86-32]
+ 			Format: nn[KMG]
+ 			Reserves a hole at the top of the kernel virtual
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index fa5b11452ae6..0cd68b221f74 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -4163,4 +4163,6 @@ static inline void accept_memory(phys_addr_t start, phys_addr_t end)
+ 
+ #endif
+ 
++int reserve_mem_find_by_name(const char *name, phys_addr_t *start, phys_addr_t *size);
++
+ #endif /* _LINUX_MM_H */
+diff --git a/mm/memblock.c b/mm/memblock.c
+index 0695284232f3..3b56d000bd1c 100644
+--- a/mm/memblock.c
++++ b/mm/memblock.c
+@@ -2227,6 +2227,123 @@ void __init memblock_free_all(void)
+ 	totalram_pages_add(pages);
+ }
+ 
++/* Keep a table to reserve named memory */
++#define RESERVE_MEM_MAX_ENTRIES		8
++#define RESERVE_MEM_NAME_SIZE		16
++struct reserve_mem_table {
++	char			name[RESERVE_MEM_NAME_SIZE];
++	phys_addr_t		start;
++	phys_addr_t		size;
++};
++static struct reserve_mem_table reserved_mem_table[RESERVE_MEM_MAX_ENTRIES];
++static int reserved_mem_count;
++
++/* Add wildcard region with a lookup name */
++static void __init reserved_mem_add(phys_addr_t start, phys_addr_t size,
++				   const char *name)
++{
++	struct reserve_mem_table *map;
++
++	map = &reserved_mem_table[reserved_mem_count++];
++	map->start = start;
++	map->size = size;
++	strscpy(map->name, name, sizeof(map->name));
++}
++
++/**
++ * reserve_mem_find_by_name - Find reserved memory region with a given name
++ * @name: The name that is attached to a reserved memory region
++ * @start: If found, holds the start address
++ * @size: If found, holds the size of the address.
++ *
++ * @start and @size are only updated if @name is found.
++ *
++ * Returns: 1 if found or 0 if not found.
++ */
++int reserve_mem_find_by_name(const char *name, phys_addr_t *start, phys_addr_t *size)
++{
++	struct reserve_mem_table *map;
++	int i;
++
++	for (i = 0; i < reserved_mem_count; i++) {
++		map = &reserved_mem_table[i];
++		if (!map->size)
++			continue;
++		if (strcmp(name, map->name) == 0) {
++			*start = map->start;
++			*size = map->size;
++			return 1;
++		}
++	}
++	return 0;
++}
++EXPORT_SYMBOL_GPL(reserve_mem_find_by_name);
++
++/*
++ * Parse reserve_mem=nn:align:name
++ */
++static int __init reserve_mem(char *p)
++{
++	phys_addr_t start, size, align, tmp;
++	char *name;
++	char *oldp;
++	int len;
++
++	if (!p)
++		return -EINVAL;
++
++	/* Check if there's room for more reserved memory */
++	if (reserved_mem_count >= RESERVE_MEM_MAX_ENTRIES)
++		return -EBUSY;
++
++	oldp = p;
++	size = memparse(p, &p);
++	if (!size || p == oldp)
++		return -EINVAL;
++
++	if (*p != ':')
++		return -EINVAL;
++
++	align = memparse(p+1, &p);
++	if (*p != ':')
++		return -EINVAL;
++
++	/*
++	 * memblock_phys_alloc() doesn't like a zero size align,
++	 * but it is OK for this command to have it.
++	 */
++	if (align < SMP_CACHE_BYTES)
++		align = SMP_CACHE_BYTES;
++
++	name = p + 1;
++	len = strlen(name);
++
++	/* name needs to have length but not too big */
++	if (!len || len >= RESERVE_MEM_NAME_SIZE)
++		return -EINVAL;
++
++	/* Make sure that name has text */
++	for (p = name; *p; p++) {
++		if (!isspace(*p))
++			break;
++	}
++	if (!*p)
++		return -EINVAL;
++
++	/* Make sure the name is not already used */
++	if (reserve_mem_find_by_name(name, &start, &tmp))
++		return -EBUSY;
++
++	start = memblock_phys_alloc(size, align);
++	if (!start)
++		return -ENOMEM;
++
++	reserved_mem_add(start, size, name);
++
++	return 1;
++}
++__setup("reserve_mem=", reserve_mem);
++
+ #if defined(CONFIG_DEBUG_FS) && defined(CONFIG_ARCH_KEEP_MEMBLOCK)
+ static const char * const flagname[] = {
+ 	[ilog2(MEMBLOCK_HOTPLUG)] = "HOTPLUG",
+-- 
+2.53.0
+

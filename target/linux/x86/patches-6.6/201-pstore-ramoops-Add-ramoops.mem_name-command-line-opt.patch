@@ -1,0 +1,93 @@
+From bc90ace0540e22339a59bf47186051bb5690fcf9 Mon Sep 17 00:00:00 2001
+From: "Steven Rostedt (Google)" <rostedt@goodmis.org>
+Date: Thu, 13 Jun 2024 11:55:08 -0400
+Subject: [PATCH] pstore/ramoops: Add ramoops.mem_name= command line option
+
+Add a method to find a region specified by reserve_mem=nn:align:name for
+ramoops. Adding a kernel command line parameter:
+
+  reserve_mem=12M:4096:oops ramoops.mem_name=oops
+
+Will use the size and location defined by the memmap parameter where it
+finds the memory and labels it "oops". The "oops" in the ramoops option
+is used to search for it.
+
+This allows for arbitrary RAM to be used for ramoops if it is known that
+the memory is not cleared on kernel crashes or soft reboots.
+
+Tested-by: Guilherme G. Piccoli <gpiccoli@igalia.com>
+Signed-off-by: Steven Rostedt (Google) <rostedt@goodmis.org>
+Acked-by: Kees Cook <kees@kernel.org>
+Link: https://lore.kernel.org/r/20240613155527.591647061@goodmis.org
+Signed-off-by: Mike Rapoport (IBM) <rppt@kernel.org>
+---
+ Documentation/admin-guide/ramoops.rst | 13 +++++++++++++
+ fs/pstore/ram.c                       | 14 ++++++++++++++
+ 2 files changed, 27 insertions(+)
+
+diff --git a/Documentation/admin-guide/ramoops.rst b/Documentation/admin-guide/ramoops.rst
+index e9f85142182d..6f534a707b2a 100644
+--- a/Documentation/admin-guide/ramoops.rst
++++ b/Documentation/admin-guide/ramoops.rst
+@@ -23,6 +23,8 @@ and type of the memory area are set using three variables:
+   * ``mem_size`` for the size. The memory size will be rounded down to a
+     power of two.
+   * ``mem_type`` to specify if the memory type (default is pgprot_writecombine).
++  * ``mem_name`` to specify a memory region defined by ``reserve_mem`` command
++    line parameter.
+ 
+ Typically the default value of ``mem_type=0`` should be used as that sets the pstore
+ mapping to pgprot_writecombine. Setting ``mem_type=1`` attempts to use
+@@ -118,6 +120,17 @@ Setting the ramoops parameters can be done in several different manners:
+ 	return ret;
+   }
+ 
++ D. Using a region of memory reserved via ``reserve_mem`` command line
++    parameter. The address and size will be defined by the ``reserve_mem``
++    parameter. Note, that ``reserve_mem`` may not always allocate memory
++    in the same location, and cannot be relied upon. Testing will need
++    to be done, and it may not work on every machine, nor every kernel.
++    Consider this a "best effort" approach. The ``reserve_mem`` option
++    takes a size, alignment and name as arguments. The name is used
++    to map the memory to a label that can be retrieved by ramoops.
++
++	reserver_mem=2M:4096:oops  ramoops.mem_name=oops
++
+ You can specify either RAM memory or peripheral devices' memory. However, when
+ specifying RAM, be sure to reserve the memory by issuing memblock_reserve()
+ very early in the architecture code, e.g.::
+diff --git a/fs/pstore/ram.c b/fs/pstore/ram.c
+index 88b34fdbf759..988993f940a9 100644
+--- a/fs/pstore/ram.c
++++ b/fs/pstore/ram.c
+@@ -50,6 +50,10 @@ module_param_hw(mem_address, ullong, other, 0400);
+ MODULE_PARM_DESC(mem_address,
+ 		"start of reserved RAM used to store oops/panic logs");
+ 
++static char *mem_name;
++module_param_named(mem_name, mem_name, charp, 0400);
++MODULE_PARM_DESC(mem_name, "name of kernel param that holds addr");
++
+ static ulong mem_size;
+ module_param(mem_size, ulong, 0400);
+ MODULE_PARM_DESC(mem_size,
+@@ -913,6 +917,16 @@ static void __init ramoops_register_dummy(void)
+ {
+ 	struct ramoops_platform_data pdata;
+ 
++	if (mem_name) {
++		phys_addr_t start;
++		phys_addr_t size;
++
++		if (reserve_mem_find_by_name(mem_name, &start, &size)) {
++			mem_address = start;
++			mem_size = size;
++		}
++	}
++
+ 	/*
+ 	 * Prepare a dummy platform data structure to carry the module
+ 	 * parameters. If mem_size isn't set, then there are no module
+-- 
+2.53.0
+
